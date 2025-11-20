@@ -1,4 +1,4 @@
-import { targetFPS } from "./config.js";
+import { targetFPS, MapSize } from "./config.js";
 import { fpsqueue as fps_queue, Weaponstat } from "./utils.js";
 import { EntityBasic, BulletBasic } from "../objects/obj_basic.js";
 import Guns_Data from "../data/weapons_data.js";
@@ -92,9 +92,10 @@ class World {
   // 初始化视口
   viewport = new Viewport(this.canvas);
 
+  // 如果 config 中配置了 MapSize，则使用配置值；否则回退到 Canvas 大小
   pos_range = {
-    width: this.canvas.width,
-    height: this.canvas.height,
+    width: MapSize?.width || this.canvas.width,
+    height: MapSize?.height || this.canvas.height,
   };
 
   pos_center = {
