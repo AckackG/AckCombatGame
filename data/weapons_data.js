@@ -9,6 +9,7 @@ export default {
     recoil: 4.5,
     range: 600,
     ReloadTime: 5000,
+    soundType: "gun1",
   },
   Scar_H: {
     wname: "Scar_H",
@@ -20,6 +21,7 @@ export default {
     recoil: 3.6,
     range: 650,
     ReloadTime: 4500,
+    soundType: "gun2",
   },
   AN94: {
     wname: "AN94",

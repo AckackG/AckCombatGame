@@ -4,6 +4,7 @@ import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "./logic.js";
 import { game, world } from "./game.js";
 import { debug_gun } from "./config.js";
+import soundManager from "./sound_manager.js";
 
 class GunBasic {
   //统计相关
@@ -48,6 +49,7 @@ class GunBasic {
     projectile = "RifleBullet",
     ReloadTime = null, //ms, 如果不手动指定，则自动计算出来
     PreFireRange = null,
+    soundType = null,
   } = {}) {
     this.damage = damage; //子弹伤害
     this.burst = burst; //每轮射击几发（霰弹）
@@ -55,6 +57,7 @@ class GunBasic {
     this.magsize = magsize;
     this.recoil = recoil; //误差角度 in degree
     this.projectile = projectile; //子弹类型 (string)
+    this.soundType = soundType || soundManager.getRandomGunSound();
 
     this.range = range; //射程是无限的，但单位会在这个距离停下
     this.PreFireRange = PreFireRange; // 默认超出range也开火，否则在这个距离内再开火
@@ -241,6 +244,7 @@ class GunBasic {
         })
       );
     }
+    soundManager.play(this.soundType, { position: { x, y } });
   }
 }
 

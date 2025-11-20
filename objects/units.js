@@ -4,6 +4,7 @@ import { DOT } from "../mylibs/effects.js";
 import { GunFactory, MeleeWeapon } from "../mylibs/weapons.js";
 import { EntityBasic } from "./obj_basic.js";
 import { game, world } from "../mylibs/game.js";
+import soundManager from "../mylibs/sound_manager.js";
 
 const pos_range = world.pos_range;
 
@@ -42,6 +43,7 @@ export class Unit extends EntityBasic {
 
     this.weapon = weapon;
     this.combat_threat_range = this.weapon.range * this.combat_threat_range_mul;
+    soundManager.play('spawn', { position: { x: this.x, y: this.y } });
   }
 
   get x() {

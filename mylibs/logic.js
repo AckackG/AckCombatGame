@@ -1,5 +1,6 @@
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { game, world } from "./game.js";
+import soundManager from "./sound_manager.js";
 
 /**
  * 【核心函数】
@@ -51,6 +52,8 @@ export function target_killed(
 
   //凶手触发 onkill
   source_unit._onkill(target);
+
+  soundManager.play('death_monster', { position: { x: target.x, y: target.y } });
 
   // 玩家击杀敌军则增加金钱
   if (
