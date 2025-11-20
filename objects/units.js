@@ -770,3 +770,22 @@ export class Dummy extends Unit {
     this._update_effect();
   }
 }
+
+export class Base extends Unit {
+  constructor({ x, y, size = 40, color = game.player_color, speed = 0, hp = 20000, weapon = null } = {}) {
+    super({ x, y, size, color, speed, maxhp: hp, weapon });
+    this.hp_regen = 20; // 基地回血速度
+    this.is_monster = false; //基地不算做敌人
+  }
+
+  // 重写 update 方法，使其不执行任何移动或攻击逻辑
+  update() {
+    this._update_hp();
+    this._update_effect();
+  }
+
+  update_slow() {
+    super.update_slow();
+    this.hp = Math.min(this.hp + this.hp_regen, this.maxhp);
+  }
+}

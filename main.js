@@ -4,6 +4,7 @@ import "./mylibs/weapons.js";
 import "./objects/units.js";
 import "./mylibs/btn_event.js";
 import "./mylibs/database.js";
+import "./mylibs/wave.js";
 import soundManager from "./mylibs/sound_manager.js";
 // import "./style.css"; //webpack打包时去掉注释
 

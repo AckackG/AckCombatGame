@@ -47,6 +47,49 @@ const placing = {
   },
 };
 
+// --- 新增：主菜单与游戏模式切换 ---
+const btn_campaign = document.getElementById("btn-campaign");
+const btn_sandbox = document.getElementById("btn-sandbox");
+const mainMenu = document.getElementById("main-menu");
+const gameContainer = document.getElementById("game-container");
+
+// 需要在战役模式中隐藏的按钮
+const campaign_hidden_btns = [
+  game.btn_testUnits,
+  game.btn_testMonsters,
+  game.btn_showdebug,
+  game.btn_benchmark,
+  document.querySelector(".debug_units"), // 整个debug区域
+];
+
+function toggleCampaignUI(isCampaign) {
+  const display = isCampaign ? "none" : "";
+  campaign_hidden_btns.forEach((btn) => {
+    if (btn) btn.style.display = display;
+  });
+}
+
+function startGame(mode) {
+  game.currentMode = mode;
+
+  // UI切换
+  mainMenu.style.opacity = "0";
+  setTimeout(() => {
+    mainMenu.style.display = "none";
+    gameContainer.style.display = "block";
+    window.dispatchEvent(new Event("resize"));
+  }, 500);
+
+  // 根据模式调整UI
+  toggleCampaignUI(mode === "CAMPAIGN");
+
+  game.start_game();
+}
+
+btn_sandbox.addEventListener("click", () => startGame("SANDBOX"));
+btn_campaign.addEventListener("click", () => startGame("CAMPAIGN"));
+// --- 结束：主菜单逻辑 ---
+
 //重启游戏按钮注册
 btn_StartGame.addEventListener("click", () => {
   game.start_game();

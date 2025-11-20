@@ -13,7 +13,7 @@
       <div class="menu-content">
         <h1 class="game-title" data-text="PROJECT: BALLISTICS">PROJECT: BALLISTICS</h1>
         <div class="menu-buttons">
-          <button class="menu-btn disabled" title="开发中...">
+          <button class="menu-btn" id="btn-campaign">
             战役模式 <span class="btn-deco">CAMPAIGN</span>
           </button>
           <button class="menu-btn" id="btn-sandbox">
@@ -91,21 +91,5 @@
       </div>
     </div>
 
-    <script>
-      // 简单的菜单切换逻辑
-      document.getElementById("btn-sandbox").addEventListener("click", function () {
-        const menu = document.getElementById("main-menu");
-        const game = document.getElementById("game-container");
-
-        // 添加淡出效果
-        menu.style.opacity = "0";
-        setTimeout(() => {
-          menu.style.display = "none";
-          game.style.display = "block";
-          // 触发 resize 事件以确保 canvas 布局正确（如果需要）
-          window.dispatchEvent(new Event("resize"));
-        }, 500);
-      });
-    </script>
   </body>
 </html>
