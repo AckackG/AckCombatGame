@@ -299,6 +299,8 @@ class Game {
     this.world = world;
   }
 
+  paused = false;
+
   //游戏tick相关
   #GameLoopID = null;
   time_now = 0; //全游戏的时间判断都依赖这个变量
@@ -346,6 +348,7 @@ class Game {
 
   //GUI相关
   btn_StartGame = document.getElementById("button1");
+  btn_pause = document.getElementById("btn-pause");
   btn_testUnits = document.getElementById("button2");
   btn_showdebug = document.getElementById("button3");
   btn_testMonsters = document.getElementById("button4");
@@ -385,8 +388,10 @@ class Game {
     this.world.update();
   }
   #update() {
-    this.#update_game();
-    this.#update_units();
+    if (!this.paused) {
+      this.#update_game();
+      this.#update_units();
+    }
   }
 
   #render_GUI_DebugInfo() {

@@ -10,6 +10,7 @@ const pos_center = world.pos_center;
 const pos_range = world.pos_range;
 
 const btn_StartGame = game.btn_StartGame;
+const btn_pause = game.btn_pause;
 const btn_testMonsters = game.btn_testMonsters;
 const btn_testUnits = game.btn_testUnits;
 const btn_showdebug = game.btn_showdebug;
@@ -50,6 +51,24 @@ const placing = {
 btn_StartGame.addEventListener("click", () => {
   game.start_game();
   placing.reset_units_btn();
+
+  重置游戏时自动取消暂停;
+  game.paused = false;
+  btn_pause.style.backgroundColor = "blue";
+  btn_pause.textContent = "暂停游戏";
+});
+
+// 暂停按钮逻辑;
+btn_pause.addEventListener("click", () => {
+  game.paused = !game.paused;
+
+  if (game.paused) {
+    btn_pause.style.backgroundColor = "red";
+    btn_pause.textContent = "继续游戏";
+  } else {
+    btn_pause.style.backgroundColor = "blue"; // 恢复默认颜色（假设CSS中默认是蓝色，或者这里写死）
+    btn_pause.textContent = "暂停游戏";
+  }
 });
 
 // 重置视角按钮;
