@@ -247,6 +247,11 @@ class World {
     // 应用视口变换 (缩放/平移)
     this.viewport.apply(this.ctx);
 
+    // 绘制地图边界
+    this.ctx.strokeStyle = "#666"; // 深灰色边界
+    this.ctx.lineWidth = 4;
+    this.ctx.strokeRect(0, 0, this.pos_range.width, this.pos_range.height);
+
     // 渲染objs
     this.objs.forEach((unit) => {
       unit.render(this.ctx);
@@ -399,7 +404,9 @@ class Game {
   #render_GUI() {
     //慢速信息
     if (this.is_half_second()) {
-      this.info_fps.innerHTML = `FPS: ${fps_queue.getAverageFps()} (${this.targetFPS})`;
+      this.info_fps.innerHTML = `FPS: ${fps_queue.getAverageFps()} (${
+        this.targetFPS
+      }) | Zoom: ${this.world.viewport.zoom.toFixed(2)}x`;
       this.info_stat.innerHTML = `Money: ${this.money.toFixed(0)}$`;
     }
 
