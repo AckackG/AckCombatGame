@@ -56,8 +56,9 @@ btn_showdebug.addEventListener("click", () => {
   //反转按钮
   info_debug.style.display = game.is_DebugMode() ? "none" : "block";
   //改变颜色
-  btn_showdebug.style.backgroundColor = info_debug.style.display =
-    game.is_DebugMode() ? "green" : "blue";
+  btn_showdebug.style.backgroundColor = info_debug.style.display = game.is_DebugMode()
+    ? "green"
+    : "blue";
 
   console.table(game.weapon_stats.get_report());
 });
@@ -107,14 +108,27 @@ function drop_unit(x, y) {
   }
 }
 
+// --- 注册滚轮缩放事件 ---
+canvas.addEventListener(
+  "wheel",
+  (event) => {
+    world.viewport.handleZoom(event);
+  },
+  { passive: false }
+); // passive: false 允许我们使用 preventDefault()
+
 canvas.addEventListener("contextmenu", function (event) {
   event.preventDefault();
   // 右键取消放置模式
   if (placing.is_placing) {
     placing.reset_units_btn();
   }
+
+  // 使用 viewport 转换坐标
+  const { x, y } = world.viewport.screenToWorld(event.clientX, event.clientY);
+
   ctx.beginPath();
-  ctx.arc(event.offsetX, event.offsetY, 10, 0, 2 * Math.PI);
+  ctx.arc(x, y, 10, 0, 2 * Math.PI);
   ctx.fillStyle = "red";
   ctx.fill();
 });
@@ -151,9 +165,8 @@ function register_playerunit() {
   //canvas左键放置
   canvas.addEventListener("click", (event) => {
     if (placing.is_placing) {
-      const rect = canvas.getBoundingClientRect();
-      const x = event.clientX - rect.left;
-      const y = event.clientY - rect.top;
+      // 使用 viewport 转换坐标，替代之前的 rect 计算
+      const { x, y } = world.viewport.screenToWorld(event.clientX, event.clientY);
       drop_unit(x, y);
     }
   });

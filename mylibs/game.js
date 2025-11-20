@@ -4,12 +4,93 @@ import { EntityBasic, BulletBasic } from "../objects/obj_basic.js";
 import Guns_Data from "../data/weapons_data.js";
 import { Quadtree } from "./quadtree.js";
 
+// 新增：视口管理类，处理缩放和坐标转换
+class Viewport {
+  constructor(canvas) {
+    this.canvas = canvas;
+    this.zoom = 1; // 缩放比例
+    this.offsetX = 0; // X轴偏移
+    this.offsetY = 0; // Y轴偏移
+
+    // 限制缩放范围
+    this.minZoom = 0.1;
+    this.maxZoom = 5.0;
+  }
+
+  // 核心功能：将屏幕坐标（鼠标点击）转换为游戏世界坐标
+  screenToWorld(screenX, screenY) {
+    const rect = this.canvas.getBoundingClientRect();
+
+    // 1. 计算鼠标在 Canvas 元素内的相对位置
+    const canvasX = screenX - rect.left;
+    const canvasY = screenY - rect.top;
+
+    // 2. 计算 CSS 缩放比例 (显示大小 / 实际分辨率)
+    // 这一步修复了“位置不一致”的 BUG
+    const cssScaleX = this.canvas.width / rect.width;
+    const cssScaleY = this.canvas.height / rect.height;
+
+    // 3. 应用视口的平移和缩放
+    // 公式：(输入坐标 * CSS缩放 - 平移) / 缩放倍率
+    const worldX = (canvasX * cssScaleX - this.offsetX) / this.zoom;
+    const worldY = (canvasY * cssScaleY - this.offsetY) / this.zoom;
+
+    return { x: worldX, y: worldY };
+  }
+
+  // 处理滚轮缩放
+  handleZoom(event) {
+    event.preventDefault();
+
+    const zoomIntensity = 0.1;
+    const direction = event.deltaY < 0 ? 1 : -1;
+    const factor = 1 + zoomIntensity * direction;
+
+    // 计算缩放前的世界坐标（以鼠标为中心）
+    const mouseWorld = this.screenToWorld(event.clientX, event.clientY);
+
+    // 应用缩放
+    let newZoom = this.zoom * factor;
+    newZoom = Math.max(this.minZoom, Math.min(newZoom, this.maxZoom));
+
+    // 计算新的偏移量，使鼠标指向的世界坐标保持不变
+    // 数学推导：MouseWorld = (CanvasMouse - NewOffset) / NewZoom
+    // => NewOffset = CanvasMouse - MouseWorld * NewZoom
+
+    const rect = this.canvas.getBoundingClientRect();
+    const cssScaleX = this.canvas.width / rect.width;
+    const cssScaleY = this.canvas.height / rect.height;
+    const canvasMouseX = (event.clientX - rect.left) * cssScaleX;
+    const canvasMouseY = (event.clientY - rect.top) * cssScaleY;
+
+    this.offsetX = canvasMouseX - mouseWorld.x * newZoom;
+    this.offsetY = canvasMouseY - mouseWorld.y * newZoom;
+
+    this.zoom = newZoom;
+  }
+
+  // 应用变换到 Context
+  apply(ctx) {
+    ctx.save();
+    ctx.translate(this.offsetX, this.offsetY);
+    ctx.scale(this.zoom, this.zoom);
+  }
+
+  // 恢复 Context
+  restore(ctx) {
+    ctx.restore();
+  }
+}
+
 class World {
   //地图相关
   /** @type {HTMLCanvasElement} */
   canvas = document.getElementById("gameCanvas");
   /** @type {CanvasRenderingContext2D} */
   ctx = this.canvas.getContext("2d");
+
+  // 初始化视口
+  viewport = new Viewport(this.canvas);
 
   pos_range = {
     width: this.canvas.width,
@@ -22,7 +103,7 @@ class World {
   };
 
   //   实体相关
-  #objs = []; //暂时用不到，取值是临时的数组
+  #objs = [];
   #units = new UnitsArray();
   #bullets = new BulletsArray();
   CanvasPrompts = [];
@@ -159,8 +240,12 @@ class World {
   }
 
   render() {
-    // 清空画布
+    // 清空画布 (使用 setTransform 确保清空整个区域，不受当前缩放影响)
+    this.ctx.setTransform(1, 0, 0, 1, 0, 0);
     this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+
+    // 应用视口变换 (缩放/平移)
+    this.viewport.apply(this.ctx);
 
     // 渲染objs
     this.objs.forEach((unit) => {
@@ -172,11 +257,15 @@ class World {
       prompt.render(this.ctx);
     });
 
+    // 恢复 Context (虽然下一帧会重置，但保持好习惯)
+    this.viewport.restore(this.ctx);
+
     //剔除过期 prompt
     this.CanvasPrompts = this.CanvasPrompts.filter((x) => !x.dead);
   }
 }
 
+// ... (Game 类保持不变) ...
 class Game {
   //游戏设置
   targetFPS = targetFPS;
@@ -292,11 +381,9 @@ class Game {
     this.world.units.map((unit) => {
       // 创建div元素
       const unit_div = document.createElement("div");
-      const text = `${Math.round(unit.x)},${Math.round(
-        unit.y
-      )} |threat: ${unit.threat.toFixed(1)} | value: ${unit.value.toFixed(
+      const text = `${Math.round(unit.x)},${Math.round(unit.y)} |threat: ${unit.threat.toFixed(
         1
-      )} | damage_dealt ${unit.weapon.stat_damage_total.toFixed(
+      )} | value: ${unit.value.toFixed(1)} | damage_dealt ${unit.weapon.stat_damage_total.toFixed(
         1
       )} |Target dead?: ${unit.target ? unit.target.dead : null} | Dead?: ${
         unit ? unit.dead : null
@@ -312,9 +399,7 @@ class Game {
   #render_GUI() {
     //慢速信息
     if (this.is_half_second()) {
-      this.info_fps.innerHTML = `FPS: ${fps_queue.getAverageFps()} (${
-        this.targetFPS
-      })`;
+      this.info_fps.innerHTML = `FPS: ${fps_queue.getAverageFps()} (${this.targetFPS})`;
       this.info_stat.innerHTML = `Money: ${this.money.toFixed(0)}$`;
     }
 
