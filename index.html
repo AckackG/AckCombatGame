@@ -19,7 +19,7 @@
           <button class="menu-btn" id="btn-sandbox">
             沙盘模式 <span class="btn-deco">SANDBOX</span>
           </button>
-          <button class="menu-btn disabled" title="开发中...">
+          <button class="menu-btn" id="btn-database">
             数据展示 <span class="btn-deco">DATABASE</span>
           </button>
           <button class="menu-btn disabled" title="开发中...">
@@ -28,6 +28,26 @@
         </div>
         <div class="menu-footer">VER 0.1.0 ALPHA // SYSTEM READY</div>
       </div>
+      <div class="scanlines"></div>
+    </div>
+
+    <!-- 新增：数据展示界面 (默认隐藏) -->
+    <div
+      id="database-container"
+      class="menu-overlay"
+      style="display: none; flex-direction: column; justify-content: flex-start; padding-top: 40px"
+    >
+      <h2 class="db-title">
+        ARMORY DATABASE // <span style="font-size: 0.6em; color: #555">ACCESS GRANTED</span>
+      </h2>
+
+      <div id="db-content" class="db-grid">
+        <!-- JS 动态生成内容 -->
+      </div>
+
+      <button id="btn-db-back" class="menu-btn" style="margin-top: 20px; width: 200px">
+        返回 <span class="btn-deco">BACK</span>
+      </button>
       <div class="scanlines"></div>
     </div>
 
