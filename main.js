@@ -1,11 +1,31 @@
-import "./mylibs/game.js";
+// import "./style.css"; //webpack打包时去掉注释
+
+import { game, world } from "./mylibs/game.js";
+import { waveManager } from "./mylibs/wave.js";
+
 import "./objects/projectiles.js";
 import "./mylibs/weapons.js";
 import "./objects/units.js";
 import "./mylibs/btn_event.js";
 import "./mylibs/database.js";
-import "./mylibs/wave.js";
 import soundManager from "./mylibs/sound_manager.js";
-// import "./style.css"; //webpack打包时去掉注释
 
+// ---------------- 模块组装 ----------------
+// 通过依赖注入，将 game 和 world 实例传入 waveManager，打破循环依赖
+waveManager.init(world, game);
+
+// 注册 waveManager.update 到 game 的回调列表
+// 注意：需要 .bind(waveManager) 来确保 update 函数内部的 this 指向 waveManager 实例
+game.update_callbacks.push(waveManager.update.bind(waveManager));
+
+// 监听 "Start Campaign" 按钮的点击事件
+const btnStartCampaign = document.getElementById("button1");
+btnStartCampaign.addEventListener("click", () => {
+    game.currentMode = "CAMPAIGN";
+    game.start_game();
+    waveManager.start(); // 在游戏开始时，手动启动波次管理器
+});
+
+
+// ---------------- 初始化 ----------------
 soundManager.preload();

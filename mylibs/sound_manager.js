@@ -13,7 +13,7 @@ class SoundManager {
       // units
       death_monster: "assets/sounds/units/death_monster.ogg",
       levelup: "assets/sounds/units/levelup.ogg",
-      spawn: "assets/sounds/units/output.ogg",
+      spawn: "assets/sounds/units/spawn.ogg",
       // gun 开头是默认枪声，加入随机池， weapon 里没有指定 soundType 时使用
       gun1: "assets/sounds/weapons/gun1.ogg",
       gun2: "assets/sounds/weapons/gun2.ogg",

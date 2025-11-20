@@ -3,7 +3,7 @@ import { fpsqueue as fps_queue, Weaponstat } from "./utils.js";
 import { EntityBasic, BulletBasic } from "../objects/obj_basic.js";
 import Guns_Data from "../data/weapons_data.js";
 import { Quadtree } from "./quadtree.js";
-import { waveManager } from "./wave.js";
+
 
 // 新增：视口管理类，处理缩放和坐标转换
 class Viewport {
@@ -300,6 +300,7 @@ class Game {
     this.world = world;
     this.currentMode = "MENU"; // 'MENU', 'SANDBOX', 'CAMPAIGN'
     this.isGameOver = false;
+    this.update_callbacks = [];
   }
 
   paused = false;
@@ -461,9 +462,7 @@ class Game {
       fps_queue.push(this.time_now);
       try {
         this.#update();
-        if (this.currentMode === "CAMPAIGN") {
-          waveManager.update(deltaTime);
-        }
+        this.update_callbacks.forEach(cb => cb(deltaTime));
         this.#render();
       } catch (error) {
         console.error("Error in game loop:", error);
@@ -477,10 +476,6 @@ class Game {
     this.world.units = new UnitsArray();
     this.money = 6000;
     this.isGameOver = false;
-
-    if (this.currentMode === "CAMPAIGN") {
-      waveManager.start();
-    }
 
     if (this.#GameLoopID) {
       cancelAnimationFrame(this.#GameLoopID);
@@ -518,3 +513,4 @@ class BulletsArray extends Array {
 export const world = new World();
 export const game = new Game(world);
 world.game = game;
+

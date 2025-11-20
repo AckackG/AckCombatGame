@@ -95,7 +95,7 @@ btn_StartGame.addEventListener("click", () => {
   game.start_game();
   placing.reset_units_btn();
 
-  重置游戏时自动取消暂停;
+  // 重置游戏时自动取消暂停;
   game.paused = false;
   btn_pause.style.backgroundColor = "blue";
   btn_pause.textContent = "暂停游戏";

@@ -42,8 +42,8 @@ export class Unit extends EntityBasic {
     this.height = size * 2.2;
 
     this.weapon = weapon;
-    this.combat_threat_range = this.weapon.range * this.combat_threat_range_mul;
-    soundManager.play('spawn', { position: { x: this.x, y: this.y } });
+    this.combat_threat_range = weapon.range * this.combat_threat_range_mul;
+    soundManager.play("spawn", { position: { x: this.x, y: this.y } });
   }
 
   get x() {
@@ -772,7 +772,15 @@ export class Dummy extends Unit {
 }
 
 export class Base extends Unit {
-  constructor({ x, y, size = 40, color = game.player_color, speed = 0, hp = 20000, weapon = null } = {}) {
+  constructor({
+    x,
+    y,
+    size = 40,
+    color = game.player_color,
+    speed = 0,
+    hp = 20000,
+    weapon = GunFactory.random_gun(0.5),
+  } = {}) {
     super({ x, y, size, color, speed, maxhp: hp, weapon });
     this.hp_regen = 20; // 基地回血速度
     this.is_monster = false; //基地不算做敌人
