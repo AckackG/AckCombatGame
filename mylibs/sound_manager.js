@@ -14,13 +14,16 @@ class SoundManager {
       death_monster: "assets/sounds/units/death_monster.ogg",
       levelup: "assets/sounds/units/levelup.ogg",
       spawn: "assets/sounds/units/output.ogg",
-      // weapons
+      // gun 开头是默认枪声，加入随机池， weapon 里没有指定 soundType 时使用
       gun1: "assets/sounds/weapons/gun1.ogg",
       gun2: "assets/sounds/weapons/gun2.ogg",
       gun3: "assets/sounds/weapons/gun3.ogg",
       gun4: "assets/sounds/weapons/gun4.ogg",
       gun5: "assets/sounds/weapons/gun5.ogg",
       gun6: "assets/sounds/weapons/gun6.ogg",
+      gl: "assets/sounds/weapons/grenade_launcher.ogg",
+      big_gun: "assets/sounds/weapons/big_gun.ogg", //tmp 寻找更好的
+      rpg: "assets/sounds/weapons/rpg.ogg", //tmp 寻找更好的
     };
 
     for (let i = 0; i < this.maxConcurrentSounds; i++) {

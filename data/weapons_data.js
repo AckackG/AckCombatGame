@@ -9,7 +9,6 @@ export default {
     recoil: 4.5,
     range: 600,
     ReloadTime: 5000,
-    soundType: "gun1",
   },
   Scar_H: {
     wname: "Scar_H",
@@ -21,7 +20,6 @@ export default {
     recoil: 3.6,
     range: 650,
     ReloadTime: 4500,
-    soundType: "gun2",
   },
   AN94: {
     wname: "AN94",
@@ -57,6 +55,7 @@ export default {
     range: 1000,
     ReloadTime: 6000,
     projectile: "High_Caliber",
+    soundType: "big_gun",
   },
   M39: {
     wname: "M39",
@@ -69,6 +68,7 @@ export default {
     range: 900,
     ReloadTime: 7000,
     projectile: "High_Caliber",
+    soundType: "big_gun",
   },
   M870: {
     wname: "M870",
@@ -146,6 +146,7 @@ export default {
     ReloadTime: 6000,
     projectile: "Grenade",
     PreFireRange: 700,
+    soundType: "gl",
   },
   RPG_7: {
     special: true,
@@ -159,5 +160,6 @@ export default {
     range: 1000,
     ReloadTime: 5000,
     projectile: "Rocket",
+    soundType: "rpg",
   },
 };
