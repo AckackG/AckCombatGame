@@ -116,6 +116,23 @@ canvas {
   background-color: #27ae60;
 }
 
+/* 新增：重置按钮样式 */
+#btn-reset-view {
+  background-color: rgba(0, 0, 0, 0.5);
+  border: 1px solid #fff;
+  color: #fff;
+  border-radius: 4px;
+  transition: background-color 0.2s;
+
+  /* 关键修复：恢复按钮的鼠标事件响应 */
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+#btn-reset-view:hover {
+  background-color: rgba(255, 255, 255, 0.3);
+}
+
 /* =========================================
    === 炫酷主菜单样式 (Main Menu Styles) ===
    ========================================= */

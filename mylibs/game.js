@@ -17,6 +17,25 @@ class Viewport {
     this.maxZoom = 5.0;
   }
 
+  平移视口;
+  pan(dx, dy) {
+    this.offsetX += dx;
+    this.offsetY += dy;
+  }
+
+  重置视口到地图中心;
+  reset(mapWidth, mapHeight) {
+    // console.log("Viewport reset called");
+    // this.zoom = 1;
+    // 计算偏移量，使地图中心对齐画布中心
+    // 公式：CanvasCenter - MapCenter * Zoom
+    // const rect = this.canvas.getBoundingClientRect();
+
+    // 注意：这里使用 canvas.width (分辨率) 而不是 rect.width (显示大小)，因为 offsetX 是作用于 Context 的
+    this.offsetX = (this.canvas.width - mapWidth * this.zoom) / 2;
+    this.offsetY = (this.canvas.height - mapHeight * this.zoom) / 2;
+  }
+
   // 核心功能：将屏幕坐标（鼠标点击）转换为游戏世界坐标
   screenToWorld(screenX, screenY) {
     const rect = this.canvas.getBoundingClientRect();

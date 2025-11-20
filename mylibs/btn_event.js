@@ -15,6 +15,7 @@ const btn_testUnits = game.btn_testUnits;
 const btn_showdebug = game.btn_showdebug;
 const btn_units = game.btn_units;
 const info_debug = game.info_debug;
+const btn_reset_view = document.getElementById("btn-reset-view");
 
 const placing = {
   is_placing: false,
@@ -49,6 +50,11 @@ const placing = {
 btn_StartGame.addEventListener("click", () => {
   game.start_game();
   placing.reset_units_btn();
+});
+
+// 重置视角按钮;
+btn_reset_view.addEventListener("click", () => {
+  world.viewport.reset(world.pos_range.width, world.pos_range.height);
 });
 
 //DEBUG信息按钮
@@ -132,6 +138,87 @@ canvas.addEventListener("contextmenu", function (event) {
   ctx.fillStyle = "red";
   ctx.fill();
 });
+
+// --- 视口交互逻辑 ---
+
+// 状态变量
+let isPanning = false;
+let lastMouseX = 0;
+let lastMouseY = 0;
+
+// 1. 鼠标按下：检测右键开始平移
+canvas.addEventListener("mousedown", (event) => {
+  // button 2 是右键
+  if (event.button === 2) {
+    // 如果正在放置单位，优先取消放置，不触发平移
+    if (placing.is_placing) {
+      return;
+    }
+
+    isPanning = true;
+    lastMouseX = event.clientX;
+    lastMouseY = event.clientY;
+    canvas.style.cursor = "grabbing"; // 改变光标样式
+  }
+});
+
+// 2. 鼠标移动：执行平移
+canvas.addEventListener("mousemove", (event) => {
+  if (isPanning) {
+    const dx = event.clientX - lastMouseX;
+    const dy = event.clientY - lastMouseY;
+
+    // 考虑到 Canvas 的 CSS 缩放，鼠标移动的像素需要转换成 Canvas 内部像素
+    const rect = canvas.getBoundingClientRect();
+    const scaleX = canvas.width / rect.width;
+    const scaleY = canvas.height / rect.height;
+
+    world.viewport.pan(dx * scaleX, dy * scaleY);
+
+    lastMouseX = event.clientX;
+    lastMouseY = event.clientY;
+  }
+});
+
+// 3. 鼠标松开/离开：停止平移
+const stopPanning = () => {
+  if (isPanning) {
+    isPanning = false;
+    canvas.style.cursor = "default";
+  }
+};
+canvas.addEventListener("mouseup", stopPanning);
+canvas.addEventListener("mouseleave", stopPanning);
+
+// 4. 滚轮缩放
+canvas.addEventListener(
+  "wheel",
+  (event) => {
+    world.viewport.handleZoom(event);
+  },
+  { passive: false }
+); // passive: false 允许我们使用 preventDefault()
+
+canvas.addEventListener("contextmenu", function (event) {
+  event.preventDefault();
+  // 右键取消放置模式
+  if (placing.is_placing) {
+    placing.reset_units_btn();
+  }
+  // 注意：如果不是放置模式，mousedown 已经处理了平移逻辑，这里只需要阻止默认菜单即可
+
+  // 仅在非平移状态下绘制红点（避免拖拽时满屏红点）
+  if (!isPanning) {
+    // 使用 viewport 转换坐标
+    const { x, y } = world.viewport.screenToWorld(event.clientX, event.clientY);
+    ctx.beginPath();
+    ctx.arc(x, y, 10, 0, 2 * Math.PI);
+    ctx.fillStyle = "red";
+    ctx.fill();
+  }
+});
+
+// --- 单位放置逻辑 ---
 
 // 正常游戏单位
 function register_playerunit() {
