@@ -3,38 +3,81 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>My 2D Game</title>
+    <title>Project: Ballistics</title>
     <link rel="stylesheet" href="style.css" />
     <script type="module" src="main.js"></script>
   </head>
   <body>
-    <canvas id="gameCanvas" width="2560" height="1200"></canvas>
-    <div class="info">
-      <div id="fps">FPS: 0</div>
-      <div id="stat"></div>
-      <div id="debufinfo" style="display: none">debuginfo</div>
+    <!-- 主菜单界面 -->
+    <div id="main-menu" class="menu-overlay">
+      <div class="menu-content">
+        <h1 class="game-title" data-text="PROJECT: BALLISTICS">PROJECT: BALLISTICS</h1>
+        <div class="menu-buttons">
+          <button class="menu-btn disabled" title="开发中...">
+            战役模式 <span class="btn-deco">CAMPAIGN</span>
+          </button>
+          <button class="menu-btn" id="btn-sandbox">
+            沙盘模式 <span class="btn-deco">SANDBOX</span>
+          </button>
+          <button class="menu-btn disabled" title="开发中...">
+            数据展示 <span class="btn-deco">DATABASE</span>
+          </button>
+          <button class="menu-btn disabled" title="开发中...">
+            系统设置 <span class="btn-deco">SETTINGS</span>
+          </button>
+        </div>
+        <div class="menu-footer">VER 0.1.0 ALPHA // SYSTEM READY</div>
+      </div>
+      <div class="scanlines"></div>
     </div>
-    <div class="buttons">
-      <button id="button1">重置游戏</button>
-      <button id="button2">测试步兵单位</button>
-      <button id="button4">测试怪物单位</button>
-      <button id="button3" title="DEBUG模式会产生延迟">显示DEBUG信息</button>
-      <button id="button5" title="结合 Performance 使用">性能测试</button>
-    </div>
-    <div class="debug_units">
-      <div id="debug_units_player"></div>
-      <div id="debug_units_enemy">
-        <button id="unitdummy">敌军Dummy</button>
+
+    <!-- 游戏容器 (默认隐藏) -->
+    <div id="game-container" style="display: none">
+      <canvas id="gameCanvas" width="2560" height="1200"></canvas>
+      <div class="info">
+        <div id="fps">FPS: 0</div>
+        <div id="stat"></div>
+        <div id="debufinfo" style="display: none">debuginfo</div>
+      </div>
+      <div class="buttons">
+        <button id="button1">重置游戏</button>
+        <button id="button2">测试步兵单位</button>
+        <button id="button4">测试怪物单位</button>
+        <button id="button3" title="DEBUG模式会产生延迟">显示DEBUG信息</button>
+        <button id="button5" title="结合 Performance 使用">性能测试</button>
+      </div>
+      <div class="debug_units">
+        <div id="debug_units_player"></div>
+        <div id="debug_units_enemy">
+          <button id="unitdummy">敌军Dummy</button>
+        </div>
+      </div>
+
+      <div class="units" id="units">
+        <button id="unit0">步枪兵x1 1000$</button>
+        <button id="unit1">战斗班组x8 5000$</button>
+        <button id="unit2">武器炮塔x1 8000$</button>
+        <button id="unit3" style="display: none">步兵战车</button>
+        <button id="unit4" style="display: none">主战坦克</button>
+        <button id="unit5" style="display: none">武装直升机</button>
       </div>
     </div>
 
-    <div class="units" id="units">
-      <button id="unit0">步枪兵x1 1000$</button>
-      <button id="unit1">战斗班组x8 5000$</button>
-      <button id="unit2">武器炮塔x1 8000$</button>
-      <button id="unit3" style="display: none">步兵战车</button>
-      <button id="unit4" style="display: none">主战坦克</button>
-      <button id="unit5" style="display: none">武装直升机</button>
-    </div>
+    <script>
+      // 简单的菜单切换逻辑
+      document.getElementById("btn-sandbox").addEventListener("click", function () {
+        const menu = document.getElementById("main-menu");
+        const game = document.getElementById("game-container");
+
+        // 添加淡出效果
+        menu.style.opacity = "0";
+        setTimeout(() => {
+          menu.style.display = "none";
+          game.style.display = "block";
+          // 触发 resize 事件以确保 canvas 布局正确（如果需要）
+          window.dispatchEvent(new Event("resize"));
+        }, 500);
+      });
+    </script>
   </body>
 </html>

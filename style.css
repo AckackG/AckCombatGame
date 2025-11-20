@@ -1,100 +1,320 @@
+@import url("https://fonts.googleapis.com/css2?family=Share+Tech+Mono&display=swap");
+
 body {
   margin: 0;
+  height: 100vh;
+  background-color: #1a1a1a; /* 深色背景 */
+  font-family: "Share Tech Mono", monospace; /* 科技感字体 */
+  overflow: hidden;
+}
+
+/* --- 游戏容器样式 (保持原有布局逻辑，但稍作调整以适应容器) --- */
+#game-container {
+  position: relative;
+  width: 100%;
+  height: 100%;
   display: flex;
   justify-content: center;
   align-items: center;
-  height: 100vh;
-  background-color: #d4d4bb;
+  background-color: #d4d4bb; /* 保持游戏内的背景色 */
 }
 
 canvas {
   border: 5px solid #000000;
+  background-color: #d4d4bb;
+  /* 确保 Canvas 不会溢出 */
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+}
+
+/* 原有的 UI 样式保持不变，但确保它们在 game-container 内定位 */
+.info,
+.buttons,
+.units,
+.debug_units {
+  position: absolute; /* 改为 absolute 相对于 game-container */
 }
 
 .info {
-  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
-  top: 10px; /* 距离顶部 10px */
-  left: 10px; /* 距离右侧 10px */
-  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
-  pointer-events: none; /* 允许鼠标穿透 */
+  top: 10px;
+  left: 10px;
+  z-index: 10;
+  pointer-events: none;
 }
-
 .info > #debufinfo {
   font-size: 11px;
-  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
   color: grey;
 }
-
 .buttons {
-  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
-  top: 10px; /* 距离顶部 10px */
-  right: 10px; /* 距离右侧 10px */
-  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+  top: 10px;
+  right: 10px;
+  z-index: 10;
 }
-
 .units {
-  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
-  top: 60px; /* 距离顶部 10px */
-  right: 100px; /* 距离右侧 10px */
-  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
-
-  display: flex; /* 启用flex布局 */
-  flex-direction: column; /* 设置子元素垂直排列 */
-  align-items: center; /* 垂直居中对齐 */
-  justify-content: space-around; /* 子元素之间平均分布空间 */
+  top: 60px;
+  right: 250px;
+  z-index: 10;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: space-around;
 }
-
+/* --- 修改 Debug Units 布局 --- */
 .debug_units {
-  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
-  top: 60px; /* 距离顶部 10px */
-  right: 10px; /* 距离右侧 10px */
-  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+  position: absolute;
+  top: 60px;
+  right: 10px;
+  z-index: 10;
 
-  display: flex; /* 启用flex布局 */
-  flex-direction: column; /* 设置子元素垂直排列 */
-  align-items: center; /* 垂直居中对齐 */
-  justify-content: space-around; /* 子元素之间平均分布空间 */
+  display: flex;
+  flex-direction: row; /* 改为横向排列，形成两列 */
+  align-items: flex-start; /* 顶部对齐 */
+  gap: 10px; /* 两列之间的间距 */
 }
+
 .debug_units > div {
-  right: 10px; /* 距离右侧 10px */
-  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
-
-  display: flex; /* 启用flex布局 */
-  flex-direction: column; /* 设置子元素垂直排列 */
-  align-items: center; /* 垂直居中对齐 */
-  justify-content: space-around; /* 子元素之间平均分布空间 */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px; /* 按钮之间的垂直间距 */
 }
 
+/* 敌军按钮样式 (原有) */
 #debug_units_enemy > button {
-  /* 设置按钮样式 */
   background-color: pink;
+  color: black;
   cursor: pointer;
+  width: 100px; /* 统一宽度，整齐一点 */
 }
 
+/* 我军按钮样式 (新增需求：淡绿色) */
+#debug_units_player > button {
+  background-color: #90ee90; /* LightGreen */
+  color: black; /* 黑色文字对比度更好 */
+  cursor: pointer;
+  width: 100px; /* 统一宽度 */
+}
+
+/* 游戏内按钮样式微调 */
+.buttons button,
+.units button,
+.debug_units button {
+  margin-bottom: 5px;
+  padding: 8px 12px;
+  border: 1px solid #000;
+  color: white;
+  text-align: center;
+  cursor: pointer;
+  font-family: "Share Tech Mono", monospace;
+  box-shadow: 2px 2px 0px rgba(0, 0, 0, 0.5);
+}
 .buttons button {
-  /* 设置按钮样式 */
-  margin-left: 5px;
-  padding: 8px 12px;
-  background-color: blue; /* 绿色 */
-  border: none;
-  color: white;
-  text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 16px;
-  cursor: pointer;
+  background-color: #2c3e50;
+}
+.units button {
+  background-color: #27ae60;
 }
 
-.units button {
-  /* 设置按钮样式 */
-  margin-left: 5px;
-  padding: 8px 12px;
-  background-color: rgb(37, 194, 160); /* 绿色 */
-  border: none;
-  color: white;
+/* =========================================
+   === 炫酷主菜单样式 (Main Menu Styles) ===
+   ========================================= */
+
+.menu-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle at center, #1a2a3a 0%, #000000 100%);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  color: #0ff; /* 青色主色调 */
+  transition: opacity 0.5s ease;
+}
+
+/* 背景扫描线效果 */
+.scanlines {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0),
+    rgba(255, 255, 255, 0) 50%,
+    rgba(0, 0, 0, 0.2) 50%,
+    rgba(0, 0, 0, 0.2)
+  );
+  background-size: 100% 4px;
+  pointer-events: none;
+  z-index: 1;
+  animation: scroll 10s linear infinite;
+}
+
+@keyframes scroll {
+  0% {
+    background-position: 0 0;
+  }
+  100% {
+    background-position: 0 100%;
+  }
+}
+
+.menu-content {
+  position: relative;
+  z-index: 2;
   text-align: center;
-  text-decoration: none;
-  display: inline-block;
-  font-size: 12px;
+  width: 600px;
+  padding: 40px;
+  border: 1px solid rgba(0, 255, 255, 0.3);
+  background: rgba(0, 0, 0, 0.7);
+  box-shadow: 0 0 20px rgba(0, 255, 255, 0.1);
+  backdrop-filter: blur(5px);
+}
+
+/* 标题故障效果 */
+.game-title {
+  font-size: 4rem;
+  margin-bottom: 50px;
+  color: #fff;
+  text-shadow: 2px 2px 0px #0ff, -2px -2px 0px #f0f;
+  position: relative;
+  letter-spacing: 5px;
+}
+
+.game-title::before,
+.game-title::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: #1a2a3a; /* 遮挡背景 */
+}
+
+.game-title::before {
+  left: 2px;
+  text-shadow: -1px 0 #f0f;
+  clip: rect(24px, 550px, 90px, 0);
+  animation: glitch-anim-2 3s infinite linear alternate-reverse;
+}
+
+.game-title::after {
+  left: -2px;
+  text-shadow: -1px 0 #0ff;
+  clip: rect(85px, 550px, 140px, 0);
+  animation: glitch-anim 2.5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% {
+    clip: rect(10px, 9999px, 30px, 0);
+  }
+  20% {
+    clip: rect(80px, 9999px, 100px, 0);
+  }
+  40% {
+    clip: rect(10px, 9999px, 50px, 0);
+  }
+  60% {
+    clip: rect(60px, 9999px, 70px, 0);
+  }
+  80% {
+    clip: rect(20px, 9999px, 90px, 0);
+  }
+  100% {
+    clip: rect(50px, 9999px, 10px, 0);
+  }
+}
+
+@keyframes glitch-anim-2 {
+  0% {
+    clip: rect(60px, 9999px, 70px, 0);
+  }
+  20% {
+    clip: rect(10px, 9999px, 30px, 0);
+  }
+  40% {
+    clip: rect(90px, 9999px, 100px, 0);
+  }
+  60% {
+    clip: rect(10px, 9999px, 40px, 0);
+  }
+  80% {
+    clip: rect(50px, 9999px, 20px, 0);
+  }
+  100% {
+    clip: rect(20px, 9999px, 60px, 0);
+  }
+}
+
+/* 菜单按钮容器 */
+.menu-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+/* 炫酷按钮样式 */
+.menu-btn {
+  position: relative;
+  background: transparent;
+  border: 1px solid #0ff;
+  color: #0ff;
+  padding: 15px 30px;
+  font-size: 1.5rem;
+  font-family: "Share Tech Mono", monospace;
+  text-transform: uppercase;
   cursor: pointer;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.menu-btn .btn-deco {
+  font-size: 0.8rem;
+  opacity: 0.5;
+  letter-spacing: 2px;
+}
+
+.menu-btn::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -100%;
+  width: 100%;
+  height: 100%;
+  background: #0ff;
+  transition: left 0.3s ease;
+  z-index: -1;
+}
+
+.menu-btn:hover:not(.disabled) {
+  color: #000;
+  box-shadow: 0 0 20px #0ff;
+}
+
+.menu-btn:hover:not(.disabled)::before {
+  left: 0;
+}
+
+.menu-btn.disabled {
+  border-color: #555;
+  color: #555;
+  cursor: not-allowed;
+}
+
+.menu-footer {
+  margin-top: 40px;
+  font-size: 0.8rem;
+  color: #555;
+  border-top: 1px solid #333;
+  padding-top: 10px;
 }
