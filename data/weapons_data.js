@@ -108,7 +108,7 @@ export default {
   },
   ASVAL: {
     wname: "ASVAL",
-    desc: "使用亚音速弹的消音冲锋枪，威胁值增长只有普通子弹的 30%",
+    desc: "使用亚音速弹的消音冲锋枪，威胁值增长只有普通子弹的 15%",
     magsize: 25,
     burst: 1,
     rpm: 800,
@@ -137,7 +137,7 @@ export default {
     desc: "6管榴弹发射器, 榴弹会在到达指定距离时爆炸",
     magsize: 6,
     burst: 1,
-    rpm: 80,
+    rpm: 120,
     damage: 75,
     recoil: 8,
     range: 650,

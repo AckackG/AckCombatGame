@@ -1,8 +1,4 @@
-import {
-  unit_distance,
-  unit_angle,
-  isBulletIntersect,
-} from "../mylibs/utils.js";
+import { unit_distance, unit_angle, isBulletIntersect } from "../mylibs/utils.js";
 import { CanvasTextPrompt } from "../mylibs/CanvasTextPrompt.js";
 import { DOT } from "../mylibs/effects.js";
 import { GunFactory, MeleeWeapon } from "../mylibs/weapons.js";
@@ -83,9 +79,7 @@ export class Unit extends EntityBasic {
    */
   get value() {
     const att_value =
-      this.threat / 100 +
-      this.weapon.stat_damage_total / 10 +
-      this.weapon.stat_kills * 20;
+      this.threat / 100 + this.weapon.stat_damage_total / 10 + this.weapon.stat_kills * 20;
     const unit_value = this.maxhp / 10 + this.speed * 10 + this.size * 5;
     const total = att_value + unit_value;
     // console.log(
@@ -161,8 +155,7 @@ export class Unit extends EntityBasic {
       return;
     }
 
-    let [unit_big, unit_small] =
-      this.size > unit.size ? [this, unit] : [unit, this];
+    let [unit_big, unit_small] = this.size > unit.size ? [this, unit] : [unit, this];
 
     // 计算方向向量
     let dx = unit_small.x - unit_big.x;
@@ -365,10 +358,7 @@ export class Unit extends EntityBasic {
       }
       // 小概率进入平移状态
       if (game.is_half_second() && this.combat_dodge_chance > Math.random()) {
-        if (
-          this.combat_dodge_moving &&
-          this.combat_dodge_chance / 2 > Math.random()
-        ) {
+        if (this.combat_dodge_moving && this.combat_dodge_chance / 2 > Math.random()) {
           this.combat_dodge_moving = false;
         } else {
           this.combat_dodge_moving = true;
@@ -604,15 +594,7 @@ export class Fighter extends Unit {
    * @param {number} maxhp 对象的最大生命值。
    * @param {string} weapon 对象的武器类型。
    */
-  constructor({
-    x,
-    y,
-    weapon,
-    size = 8,
-    color = game.player_color,
-    speed = 3,
-    maxhp = 1500,
-  } = {}) {
+  constructor({ x, y, weapon, size = 8, color = game.player_color, speed = 3, maxhp = 1500 } = {}) {
     super({ x, y, size, color, speed, maxhp, weapon });
   }
 
@@ -632,20 +614,17 @@ export class Fighter extends Unit {
 
 export class Turret extends Fighter {
   combat_dodge_chance = 0;
-  constructor({
-    x,
-    y,
-    weapon,
-    size = 25,
-    color = game.player_color,
-    maxhp = 8000,
-  } = {}) {
+  constructor({ x, y, weapon, size = 25, color = game.player_color, maxhp = 8000 } = {}) {
     //炮塔用任何武器都加强
     let TurretGun = GunFactory.random_gun(0.5);
     TurretGun.recoil /= 1.5;
     TurretGun.ReloadTime /= 1.5;
     TurretGun.burst *= 2;
     TurretGun.magsize *= 2;
+
+    if (TurretGun.PreFireRange) {
+      TurretGun.PreFireRange *= 3;
+    }
     super({
       x,
       y,
@@ -720,10 +699,7 @@ export class Monster extends Unit {
    * 避免近战单位追逐过远的目标
    */
   _slow_ReTarget() {
-    if (
-      this.target &&
-      unit_distance(this, this.target) > this.weapon.range * 3
-    ) {
+    if (this.target && unit_distance(this, this.target) > this.weapon.range * 3) {
       this._find_target(5);
     }
   }
@@ -783,15 +759,7 @@ export class Monster extends Unit {
 }
 
 export class Dummy extends Unit {
-  constructor({
-    x,
-    y,
-    weapon,
-    size = 15,
-    color = "red",
-    speed = 3,
-    maxhp = 10000,
-  } = {}) {
+  constructor({ x, y, weapon, size = 15, color = "red", speed = 3, maxhp = 10000 } = {}) {
     super({ x, y, size, color, speed, maxhp, weapon });
   }
   update() {

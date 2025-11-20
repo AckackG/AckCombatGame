@@ -127,8 +127,7 @@ export class Bullet extends BulletBasic {
   #explosion_dmg_final(distance) {
     const damage_percent =
       this.exploding_minimum_percent +
-      (1 - this.exploding_minimum_percent) *
-        (1 - distance / this.exploding_radius);
+      (1 - this.exploding_minimum_percent) * (1 - distance / this.exploding_radius);
     return this.exploding_damage * damage_percent;
   }
 
@@ -137,10 +136,7 @@ export class Bullet extends BulletBasic {
     let units = world.UnitsQT.retrieve(this);
     units.forEach((unit) => {
       //(友伤关闭的敌军单位 || 友伤开启的全部单位)
-      if (
-        (unit.color !== this.color && !this.exploding_ff) ||
-        this.exploding_ff
-      ) {
+      if ((unit.color !== this.color && !this.exploding_ff) || this.exploding_ff) {
         let dis = unit_distance(unit, this) - unit.size;
         if (dis <= this.exploding_radius && !unit.dead) {
           let dmg = this.#explosion_dmg_final(dis);
@@ -152,13 +148,7 @@ export class Bullet extends BulletBasic {
     });
 
     //添加爆炸特效
-    CanvasCircle.explosion(
-      this.x,
-      this.y,
-      this.exploding_radius,
-      this.color,
-      2000
-    );
+    CanvasCircle.explosion(this.x, this.y, this.exploding_radius, this.color, 2000);
   }
 
   /**
@@ -272,11 +262,7 @@ export class Bullet extends BulletBasic {
       source_unit: this.source_unit,
       source_weapon: this.source_weapon,
     });
-    this._DamageInfo_Debug(
-      target.x + getRandomSign() * 5,
-      target.y - 8,
-      damage
-    );
+    this._DamageInfo_Debug(target.x + getRandomSign() * 5, target.y - 8, damage);
 
     //判断击杀
     if (!target._update_hp()) {
@@ -300,11 +286,7 @@ export class Bullet extends BulletBasic {
     if (game.time_now > this.DeadTimeStamp) {
       this.dead = true;
       if (this.EndLife_warning)
-        console.warn(
-          "A bullet from:",
-          this.source_weapon.wname,
-          "has exceeded its lifetime"
-        );
+        console.warn("A bullet from:", this.source_weapon.wname, "has exceeded its lifetime");
     }
   }
 
@@ -388,7 +370,7 @@ export class BulletFactory {
 
   static Buckshot({ x, y, angle, source_unit, source_weapon }) {
     let sp = 24 + Math.random() * 2 - 1;
-    let range_limit = 800; //霰弹枪只能射800距离
+    let range_limit = source_weapon.PreFireRange - 50; //霰弹枪只能射800距离
     let b = new Bullet({
       x,
       y,
@@ -407,7 +389,7 @@ export class BulletFactory {
 
   static DragonBreath({ x, y, angle, source_unit, source_weapon }) {
     let sp = 20 + Math.random() * 4;
-    let range_limit = 650; //DragonBreath只能射650距离
+    let range_limit = source_weapon.PreFireRange - 50; //DragonBreath只能射650距离
     let b = new Bullet({
       x,
       y,
@@ -444,7 +426,7 @@ export class BulletFactory {
   }
 
   static Grenade({ x, y, angle, source_unit, source_weapon }) {
-    let range_limit = 650 + Math.random() * 100; //Grenade 650-750距离后自然爆炸
+    let range_limit = source_weapon.PreFireRange + Math.random() * 100 - 100; //Grenade 650-750距离后自然爆炸
     let speed = 15;
     let b = new Bullet({
       x,
@@ -522,7 +504,7 @@ export class BulletFactory {
       source_weapon,
       speed: 25,
       size: 0.95,
-      threat_level: 0.3,
+      threat_level: 0.15,
     });
     b.pierce = 0;
     b.name = "SubsonicBullet";
