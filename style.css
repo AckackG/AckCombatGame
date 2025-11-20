@@ -1,0 +1,100 @@
+body {
+  margin: 0;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: #d4d4bb;
+}
+
+canvas {
+  border: 5px solid #000000;
+}
+
+.info {
+  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
+  top: 10px; /* 距离顶部 10px */
+  left: 10px; /* 距离右侧 10px */
+  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+  pointer-events: none; /* 允许鼠标穿透 */
+}
+
+.info > #debufinfo {
+  font-size: 11px;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  color: grey;
+}
+
+.buttons {
+  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
+  top: 10px; /* 距离顶部 10px */
+  right: 10px; /* 距离右侧 10px */
+  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+}
+
+.units {
+  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
+  top: 60px; /* 距离顶部 10px */
+  right: 100px; /* 距离右侧 10px */
+  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+
+  display: flex; /* 启用flex布局 */
+  flex-direction: column; /* 设置子元素垂直排列 */
+  align-items: center; /* 垂直居中对齐 */
+  justify-content: space-around; /* 子元素之间平均分布空间 */
+}
+
+.debug_units {
+  position: fixed; /* 固定按钮位置，使其不随页面滚动 */
+  top: 60px; /* 距离顶部 10px */
+  right: 10px; /* 距离右侧 10px */
+  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+
+  display: flex; /* 启用flex布局 */
+  flex-direction: column; /* 设置子元素垂直排列 */
+  align-items: center; /* 垂直居中对齐 */
+  justify-content: space-around; /* 子元素之间平均分布空间 */
+}
+.debug_units > div {
+  right: 10px; /* 距离右侧 10px */
+  z-index: 10; /* 确保按钮显示在 Canvas 上方 */
+
+  display: flex; /* 启用flex布局 */
+  flex-direction: column; /* 设置子元素垂直排列 */
+  align-items: center; /* 垂直居中对齐 */
+  justify-content: space-around; /* 子元素之间平均分布空间 */
+}
+
+#debug_units_enemy > button {
+  /* 设置按钮样式 */
+  background-color: pink;
+  cursor: pointer;
+}
+
+.buttons button {
+  /* 设置按钮样式 */
+  margin-left: 5px;
+  padding: 8px 12px;
+  background-color: blue; /* 绿色 */
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+}
+
+.units button {
+  /* 设置按钮样式 */
+  margin-left: 5px;
+  padding: 8px 12px;
+  background-color: rgb(37, 194, 160); /* 绿色 */
+  border: none;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 12px;
+  cursor: pointer;
+}

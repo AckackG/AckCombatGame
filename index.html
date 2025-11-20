@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>My 2D Game</title>
+    <link rel="stylesheet" href="style.css" />
+    <script type="module" src="main.js"></script>
+  </head>
+  <body>
+    <canvas id="gameCanvas" width="2560" height="1200"></canvas>
+    <div class="info">
+      <div id="fps">FPS: 0</div>
+      <div id="stat"></div>
+      <div id="debufinfo" style="display: none">debuginfo</div>
+    </div>
+    <div class="buttons">
+      <button id="button1">重置游戏</button>
+      <button id="button2">测试步兵单位</button>
+      <button id="button4">测试怪物单位</button>
+      <button id="button3" title="DEBUG模式会产生延迟">显示DEBUG信息</button>
+      <button id="button5" title="结合 Performance 使用">性能测试</button>
+    </div>
+    <div class="debug_units">
+      <div id="debug_units_player"></div>
+      <div id="debug_units_enemy">
+        <button id="unitdummy">敌军Dummy</button>
+      </div>
+    </div>
+
+    <div class="units" id="units">
+      <button id="unit0">步枪兵x1 1000$</button>
+      <button id="unit1">战斗班组x8 5000$</button>
+      <button id="unit2">武器炮塔x1 8000$</button>
+      <button id="unit3" style="display: none">步兵战车</button>
+      <button id="unit4" style="display: none">主战坦克</button>
+      <button id="unit5" style="display: none">武装直升机</button>
+    </div>
+  </body>
+</html>
