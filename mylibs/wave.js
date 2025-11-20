@@ -10,6 +10,7 @@ class WaveManager {
     this.waveInterval = 60000; // 两波之间的间隔时间 (ms)
     this.spawnType = "monster"; // 'monster' 或 'soldier'
     this.hasEnemies = false; // 缓存敌军状态
+    this.maxSpawnsPerWave = 350;
 
     this.world = null;
     this.game = null;
@@ -160,7 +161,7 @@ class WaveManager {
   spawnWave() {
     this.waveNumber++;
 
-    const spawn_count = Math.min(5 + this.waveNumber * 2, 50);
+    const spawn_count = Math.min(5 + this.waveNumber * 2, this.maxSpawnsPerWave);
     console.log(`Spawning Wave ${this.waveNumber} | ${spawn_count} ${this.spawnType}s`);
 
     if (this.spawnType === "monster") {

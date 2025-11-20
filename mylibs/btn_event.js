@@ -298,7 +298,7 @@ function register_playerunit() {
     placing.reset_units_btn();
     placing.is_placing = true;
     e.target.style.backgroundColor = "red";
-    placing.placing_classes = Array.from({ length: 5 }, () => Fighter);
+    placing.placing_classes = Array.from({ length: 6 }, () => Fighter);
     placing.placing_cost = 5000;
   });
 
@@ -308,7 +308,7 @@ function register_playerunit() {
     placing.is_placing = true;
     e.target.style.backgroundColor = "red";
     placing.placing_classes = [Turret];
-    placing.placing_cost = 8000;
+    placing.placing_cost = 12000;
   });
 
   //canvas左键放置
