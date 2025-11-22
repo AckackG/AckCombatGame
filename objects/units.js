@@ -611,6 +611,33 @@ export class Fighter extends Unit {
     this.exp += victim.value;
     //击杀加速下一次换弹!
     this.weapon.boost_reload(this.x, this.y);
+
+    const expNeeded = 1000 + this.level * 500;
+    if (this.exp >= expNeeded) {
+      this.level++;
+      this.exp -= expNeeded;
+
+      // 提升属性
+      this.maxhp += 100;
+      this.hp = this.maxhp; // 回血
+      this.speed = Math.min(this.speed + 0.2, 5); // 微量提升移速
+      this.hp_regen += 2;
+      this.weapon.ReloadTime = Math.max(500, this.weapon.ReloadTime * 0.9); // 减少10%换弹时间
+      this.weapon.recoil = Math.max(0.1, this.weapon.recoil * 0.9); // 减少10%后坐力
+
+      // 视觉与听觉反馈
+      soundManager.play("levelup", { position: { x: this.x, y: this.y } });
+      world.CanvasPrompts.push(
+        new CanvasTextPrompt({
+          text: "LVL UP!",
+          unit: this,
+          color: "gold",
+          size: 15,
+          lifetime: 2000,
+          vy: -1,
+        })
+      );
+    }
   }
 }
 
@@ -721,8 +748,9 @@ export class Monster extends Unit {
     this.hp = Math.min(this.hp * 1.5 + this.maxhp * 0.1, this.maxhp);
   }
 
-  static spawn_fast(x, y) {
-    const monster_mul = Math.random() + 0.75;
+  static spawn_fast(x, y, monster_mul) {
+    // 如果没有指定 monster_mul，则生成随机数
+    monster_mul = monster_mul ?? Math.random() + 0.75;
     return new this({
       x,
       y,
@@ -733,8 +761,9 @@ export class Monster extends Unit {
       monster_mul,
     });
   }
-  static spawn_normal(x, y) {
-    const monster_mul = Math.random() + +0.75;
+
+  static spawn_normal(x, y, monster_mul) {
+    monster_mul = monster_mul ?? Math.random() + 0.75;
     return new this({
       x,
       y,
@@ -746,8 +775,8 @@ export class Monster extends Unit {
     });
   }
 
-  static spawn_big(x, y) {
-    const monster_mul = Math.random() + 0.75;
+  static spawn_big(x, y, monster_mul) {
+    monster_mul = monster_mul ?? Math.random() + 0.75;
     return new this({
       x,
       y,

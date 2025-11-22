@@ -84,10 +84,31 @@ class WaveManager {
       this.spawnWave();
       this.timeToNextWave = this.waveInterval;
     }
+
+    // 每0.25秒更新UI
+    if (this.game.is_quarter_second) {
+      this.renderUI();
+    }
+  }
+
+  renderUI() {
+    const ui = document.getElementById("wave-info");
+    if (ui) {
+      ui.textContent = `WAVE: ${this.waveNumber} | NEXT: ${(this.timeToNextWave / 1000).toFixed(
+        1
+      )}s | ENEMIES: ${this.hasEnemies ? "ACTIVE" : "CLEARED"}`;
+    }
+  }
+
+  _calculatePlayerStrength() {
+    return this.world.units
+      .filter((u) => u.color === this.game.player_color)
+      .reduce((sum, u) => sum + (u.value ?? 0), 0);
   }
 
   #spawn_monsters(count) {
-    let num = count / 3 + 1;
+    const intensity = 1 + this.waveNumber * 0.1;
+    let num = count / 1.75 + 1;
     let width = this.world.pos_range.width;
     let height = this.world.pos_range.height;
 
@@ -99,7 +120,7 @@ class WaveManager {
         position: "right",
         narrow: true,
       });
-      this.world.units.push(Monster.spawn_fast(x, y));
+      this.world.units.push(Monster.spawn_fast(x, y, intensity));
     }
 
     // 地图右侧普通单位
@@ -110,7 +131,7 @@ class WaveManager {
         position: "right",
         narrow: true,
       });
-      this.world.units.push(Monster.spawn_normal(x, y));
+      this.world.units.push(Monster.spawn_normal(x, y, intensity));
     }
 
     // 地图右侧肉盾
@@ -121,7 +142,7 @@ class WaveManager {
         position: "right",
         narrow: true,
       });
-      this.world.units.push(Monster.spawn_big(x, y));
+      this.world.units.push(Monster.spawn_big(x, y, intensity));
     }
   }
 
@@ -138,10 +159,29 @@ class WaveManager {
         position: "right",
         narrow: true,
       });
-      this.world.units.push(Battalion.spawn_infantry(x, y));
+
+      if (this.waveNumber >= 12) {
+        const soldier_type = Math.random();
+        if (soldier_type < 0.4) {
+          this.world.units.push(Battalion.spawn_infantry(x, y));
+        } else if (soldier_type < 0.8) {
+          this.world.units.push(Battalion.spawn_veteran(x, y));
+        } else {
+          this.world.units.push(Battalion.spawn_specOps(x, y));
+        }
+      } else if (this.waveNumber >= 6) {
+        if (Math.random() < 0.5) {
+          this.world.units.push(Battalion.spawn_infantry(x, y));
+        } else {
+          this.world.units.push(Battalion.spawn_veteran(x, y));
+        }
+      } else {
+        this.world.units.push(Battalion.spawn_infantry(x, y));
+      }
     }
 
     // 敌军特殊小队
+    const weapon_quality = 0.75 + this.waveNumber * 0.02;
     for (let i = 0; i < num / 4; i++) {
       let { x, y } = this.world.randomPoint({
         width,
@@ -152,7 +192,7 @@ class WaveManager {
         x,
         y,
         color: "blue",
-        weapon: GunFactory.random_gun(0.75),
+        weapon: GunFactory.random_gun(weapon_quality),
       });
       this.world.units.push(h);
     }
@@ -161,7 +201,11 @@ class WaveManager {
   spawnWave() {
     this.waveNumber++;
 
-    const spawn_count = Math.min(5 + this.waveNumber * 2, this.maxSpawnsPerWave);
+    const playerStrength = this._calculatePlayerStrength();
+    let baseCount = 5 + this.waveNumber * 2;
+    let dynamicCount = Math.floor(playerStrength * 0.001);
+    const spawn_count = Math.min(baseCount + dynamicCount, this.maxSpawnsPerWave);
+
     console.log(`Spawning Wave ${this.waveNumber} | ${spawn_count} ${this.spawnType}s`);
 
     if (this.spawnType === "monster") {
