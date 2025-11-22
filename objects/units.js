@@ -612,7 +612,7 @@ export class Fighter extends Unit {
     //击杀加速下一次换弹!
     this.weapon.boost_reload(this.x, this.y);
 
-    const expNeeded = 1000 + this.level * 500;
+    const expNeeded = 1000 + this.level * 250;
     if (this.exp >= expNeeded) {
       this.level++;
       this.exp -= expNeeded;
@@ -704,6 +704,10 @@ export class Monster extends Unit {
       weapon,
     });
     this.speed_up_factor = speed_up_factor;
+    this.last_position = { x: this.x, y: this.y };
+    this.stuck_counter = 0;
+    this.random_offset_angle = 0;
+    this.min_move_threshold = this.speed * this.speed * 0.01; // 预计算
   }
 
   _move() {
@@ -712,12 +716,37 @@ export class Monster extends Unit {
       return;
     }
 
-    // 如果超出攻击距离，则靠近
-    if (this.weapon.range < unit_distance(this, this.target)) {
-      super._moveToTarget();
+    // 每3帧检测一次卡住
+    if (game.time_now % 3 === 0) {
+      const dx = this.x - this.last_position.x;
+      const dy = this.y - this.last_position.y;
+      const moved_distance_sq = dx * dx + dy * dy;
+
+      if (moved_distance_sq < this.min_move_threshold) {
+        this.stuck_counter++;
+      } else {
+        this.stuck_counter = 0;
+      }
+
+      this.last_position.x = this.x;
+      this.last_position.y = this.y;
     }
 
-    //没有平移逻辑
+    // 卡住超过10次检测(≈1秒)，添加随机偏移
+    if (this.stuck_counter > 10) {
+      this.random_offset_angle = (Math.random() - 0.5) * Math.PI;
+      this.stuck_counter = 0;
+    }
+
+    // 正常移动逻辑
+    if (this.weapon.range < unit_distance(this, this.target)) {
+      const base_angle = unit_angle(this, this.target);
+      const actual_angle = base_angle + this.random_offset_angle;
+      this.moveTowards(actual_angle);
+      this.random_offset_angle *= 0.95;
+    }
+
+    //===没有平移逻辑===
   }
 
   /**
@@ -737,6 +766,11 @@ export class Monster extends Unit {
     super.update_slow();
     this._slow_ReTarget();
     this.speed += this.speed_up_factor;
+
+    // 每秒重置卡住计数器(防止累积)
+    if (this.stuck_counter > 0) {
+      this.stuck_counter = Math.max(0, this.stuck_counter - 2);
+    }
   }
 
   _onkill(victim) {
