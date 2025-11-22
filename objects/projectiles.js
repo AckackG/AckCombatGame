@@ -442,7 +442,7 @@ export class BulletFactory {
     b.pierce = 0;
     b.name = "Grenade";
     b.EndLife_warning = false;
-    b.damage_text_always = true;
+    b.damage_text_always = false; //卡顿
     b.damage_text_affix = "💥";
 
     b.exploding_damage = 75;
@@ -468,7 +468,7 @@ export class BulletFactory {
     b.pierce = 0;
     b.name = "Rocket";
     b.EndLife_warning = false;
-    b.damage_text_always = true;
+    b.damage_text_always = false; //卡顿
     b.damage_text_affix = "💥";
 
     b.exploding_damage = 300;
