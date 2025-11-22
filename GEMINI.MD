@@ -22,7 +22,7 @@
 - **`CanvasTextPrompt.js`**: 视觉反馈渲染。用于绘制飘字（伤害数值）、简单的圆形粒子和爆炸效果。
 - **`database.js`**: 武器数据库。负责渲染游戏内所有武器的详细数据，并处理主菜单与数据库视图之间的导航。
 - **`sound_manager.js`**: 音效管理器。管理游戏中所有音效的加载和播放，使用对象池进行性能优化，并提供播放随机枪声音效的功能。
--  wave.js 管理游戏战役模式
+-  `wave.js` 管理游戏战役模式
 
 ## objects/ (游戏实体)
 - **`obj_basic.js`**: 实体基类。定义了 `MoveableObject`（处理移动向量）、`EntityBasic`（单位基类）和 `BulletBasic`（子弹基类）。
