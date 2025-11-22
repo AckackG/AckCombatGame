@@ -3,6 +3,7 @@ import { Fighter, Unit, Turret, Monster, Dummy } from "../objects/units.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
 import { game, world } from "./game.js";
 import { Battalion } from "../objects/battalion.js";
+import { performanceCounter } from "./performance_counter.js";
 
 const ctx = world.ctx;
 const canvas = world.canvas;
@@ -92,8 +93,8 @@ btn_campaign.addEventListener("click", () => startGame("CAMPAIGN"));
 
 //重启游戏按钮注册
 btn_StartGame.addEventListener("click", () => {
-  game.start_game();
   placing.reset_units_btn();
+  game.start_game();
 
   // 重置游戏时自动取消暂停;
   game.paused = false;

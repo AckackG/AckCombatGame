@@ -3,7 +3,7 @@ import { fpsqueue as fps_queue, Weaponstat } from "./utils.js";
 import { EntityBasic, BulletBasic } from "../objects/obj_basic.js";
 import Guns_Data from "../data/weapons_data.js";
 import { Quadtree } from "./quadtree.js";
-
+import { performanceCounter } from "./performance_counter.js";
 
 // 新增：视口管理类，处理缩放和坐标转换
 class Viewport {
@@ -124,7 +124,6 @@ class World {
   };
 
   //   实体相关
-  #objs = [];
   #units = new UnitsArray();
   #bullets = new BulletsArray();
   CanvasPrompts = [];
@@ -142,17 +141,6 @@ class World {
     width: this.pos_range.width,
     height: this.pos_range.height,
   });
-
-  /**
-   * 获取所有对象的集合。
-   *
-   * 合并并返回`units`和`bullets`两个属性的值。
-   *
-   * @returns {Array} 返回一个数组，包含`units`和`bullets`数组中的所有元素。
-   */
-  get objs() {
-    return [...this.units, ...this.bullets];
-  }
 
   get units() {
     return this.#units;
@@ -230,14 +218,26 @@ class World {
     });
 
     // 更新快慢逻辑
-    this.objs.forEach((obj) => {
+    const units_start = performance.now();
+    this.units.forEach((obj) => {
       obj.update();
       if (this.game.is_full_second()) {
         obj.update_slow();
       }
     });
+    const units_end = performance.now();
+    const bullets_start = performance.now();
+    this.bullets.forEach((obj) => {
+      obj.update();
+      if (this.game.is_full_second()) {
+        obj.update_slow();
+      }
+    });
+    const bullets_end = performance.now();
 
     //再次遍历，对于每一个unit，使用 quadtree 获取筛选过的可能的碰撞obj候选列表
+
+    const collisions_start = performance.now();
     this.units.forEach((unit) => {
       // 单位 X 单位
       const unit_candidates = this.UnitsQT.retrieve(unit);
@@ -254,6 +254,15 @@ class World {
         }
       });
     });
+    const collisions_end = performance.now();
+
+    // 记录性能数据（分开记录单位和子弹）
+    const units_time = units_end - units_start;
+    const bullets_time = bullets_end - bullets_start; // 简化：碰撞检测算入子弹
+
+    performanceCounter.recordUnits(units_time, this.units.length);
+    performanceCounter.recordBullets(bullets_time, this.bullets.length);
+    performanceCounter.recordCollisions(collisions_end - collisions_start);
 
     //剔除死亡单位 / 子弹
     this.units = this.units.filter((x) => !x.dead);
@@ -273,15 +282,32 @@ class World {
     this.ctx.lineWidth = 4;
     this.ctx.strokeRect(0, 0, this.pos_range.width, this.pos_range.height);
 
-    // 渲染objs
-    this.objs.forEach((unit) => {
+    // 渲染 units
+    const render_units_start = performance.now();
+    this.units.forEach((unit) => {
       unit.render(this.ctx);
     });
+    const render_units_end = performance.now();
 
-    // 渲染游戏信息
+    // 渲染 bullets
+    const render_bullets_start = performance.now();
+    this.bullets.forEach((bullet) => {
+      bullet.render(this.ctx);
+    });
+    const render_bullets_end = performance.now();
+
+    // 渲染 Prompts
+    const render_canvas_start = performance.now();
     this.CanvasPrompts.forEach((prompt) => {
       prompt.render(this.ctx);
     });
+    const render_canvas_end = performance.now();
+    performanceCounter.recordRendertime(
+      render_units_end - render_units_start,
+      render_bullets_end - render_bullets_start,
+      render_canvas_end - render_canvas_start,
+      this.CanvasPrompts.length
+    );
 
     // 恢复 Context (虽然下一帧会重置，但保持好习惯)
     this.viewport.restore(this.ctx);
@@ -365,6 +391,7 @@ class Game {
   debug_units_enemy = document.getElementById("debug_units_enemy");
 
   info_fps = document.getElementById("fps");
+  info_perf = document.getElementById("perf");
   info_stat = document.getElementById("stat");
   info_debug = document.getElementById("debufinfo");
 
@@ -439,6 +466,13 @@ class Game {
       this.info_stat.innerHTML = `Money: ${this.money.toFixed(0)}$`;
     }
 
+    // 性能计数器（仅沙盘模式，每1/4秒更新）
+    if (this.currentMode === "SANDBOX" && this.is_quarter_second()) {
+      this.info_perf.innerHTML = performanceCounter.getReport();
+    } else if (this.currentMode !== "SANDBOX") {
+      this.info_perf.innerHTML = ""; // 非沙盘模式清空
+    }
+
     this.#render_GUI_DebugInfo();
   }
 
@@ -462,7 +496,7 @@ class Game {
       fps_queue.push(this.time_now);
       try {
         this.#update();
-        this.update_callbacks.forEach(cb => cb(deltaTime));
+        this.update_callbacks.forEach((cb) => cb(deltaTime));
         this.#render();
       } catch (error) {
         console.error("Error in game loop:", error);
@@ -476,6 +510,8 @@ class Game {
     this.world.units = new UnitsArray();
     this.money = 6000;
     this.isGameOver = false;
+
+    performanceCounter.reset();
 
     if (this.#GameLoopID) {
       cancelAnimationFrame(this.#GameLoopID);
@@ -513,4 +549,3 @@ class BulletsArray extends Array {
 export const world = new World();
 export const game = new Game(world);
 world.game = game;
-

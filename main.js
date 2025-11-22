@@ -21,11 +21,10 @@ game.update_callbacks.push(waveManager.update.bind(waveManager));
 // 监听 "Start Campaign" 按钮的点击事件
 const btnStartCampaign = document.getElementById("button1");
 btnStartCampaign.addEventListener("click", () => {
-    game.currentMode = "CAMPAIGN";
-    game.start_game();
-    waveManager.start(); // 在游戏开始时，手动启动波次管理器
+  // game.currentMode = "CAMPAIGN";
+  game.start_game();
+  waveManager.start(); // 在游戏开始时，手动启动波次管理器
 });
-
 
 // ---------------- 初始化 ----------------
 soundManager.preload();
