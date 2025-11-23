@@ -88,7 +88,13 @@ export class PerformanceCounter {
       2
     )}ms | Render Canvas ${this.render_canvas_time.toFixed(2)}ms (${
       this.render_canvas_count
-    } times) <br>  Total: ${(total_time + this.collisions_time).toFixed(2)}ms`;
+    } times) <br>  Total: ${(
+      total_time +
+      this.collisions_time +
+      this.render_units_time +
+      this.render_bullets_time +
+      this.render_canvas_time
+    ).toFixed(2)}ms`;
   }
 }
 
