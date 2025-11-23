@@ -33,7 +33,7 @@ export class Bullet extends BulletBasic {
    * @param {Object} source_unit - 弹丸的来源单位对象，用于继承单位的颜色属性。
    * @param {number} [speed=20] - 弹丸的初始速度，默认为20。
    * @param {number} [size=1] - 弹丸的大小，默认为1。
-   * @param {number} [lifetime=10000] - 弹丸的生命周期，默认为10000毫秒。
+   * @param {number} [lifetime=null] - 弹丸的生命周期，默认为null，自动根据 range_max 计算。
    * @param {number} [acceleration=0] - 弹丸在"默认angle"上的加速度，默认为0。
    * @param {number} [ax=0] - 弹丸在x轴上的加速度，默认为0。设置此值将导致 acceleration 失效
    * @param {number} [ay=0] - 弹丸在y轴上的加速度，默认为0。设置此值将导致 acceleration 失效
@@ -49,7 +49,7 @@ export class Bullet extends BulletBasic {
     source_unit,
     speed = 20,
     size = 1,
-    lifetime = 10000,
+    lifetime = null,
     acceleration = 0,
     ax = 0,
     ay = 0,
@@ -81,8 +81,17 @@ export class Bullet extends BulletBasic {
     this.tracer_count = tracer_count;
 
     //存活相关
-    this.lifetime = lifetime; //10s
-    this.DeadTimeStamp = game.time_now + lifetime;
+    // 如果没有手动指定 lifetime，则根据 source_weapon.Range_Max 和 speed 计算
+    // 算法: 时间 = (距离 / 速度) * 帧时间
+    if (lifetime !== null) {
+      this.lifetime = lifetime;
+    } else if (this.source_weapon && this.source_weapon.Range_Max) {
+      this.lifetime = (this.source_weapon.Range_Max / this.speed) * (1000 / game.targetFPS);
+    } else {
+      this.lifetime = 10000;
+    }
+
+    this.DeadTimeStamp = game.time_now + this.lifetime;
 
     //爆炸相关
     this.exploding = exploding;

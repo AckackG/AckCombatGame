@@ -3,7 +3,7 @@ import { unit_distance, getRandomSign } from "./utils.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "./logic.js";
 import { game, world } from "./game.js";
-import { debug_gun } from "./config.js";
+import { debug_gun, DefaultMaxRangeMul, DefaultPrefireRangeMul } from "./config.js";
 import soundManager from "./sound_manager.js";
 
 class GunBasic {
@@ -37,6 +37,7 @@ class GunBasic {
    * @param {string} projectile 枪械使用的弹丸类型，默认为Bullet类。
    * @param {number|null} ReloadTime 枪械的换弹时间（毫秒），如果为null，则根据其他属性计算得出。
    * @param {number|null} PreFireRange 默认超出range也开火，否则在这个距离内再开火
+   * @param {number|null} Range_Max 子弹最大飞行距离，用于计算lifetime
    */
   constructor({
     wname = "GunBasic",
@@ -49,6 +50,7 @@ class GunBasic {
     projectile = "RifleBullet",
     ReloadTime = null, //ms, 如果不手动指定，则自动计算出来
     PreFireRange = null,
+    Range_Max = null,
     soundType = null,
   } = {}) {
     this.damage = damage; //子弹伤害
@@ -60,7 +62,10 @@ class GunBasic {
     this.soundType = soundType || soundManager.getRandomGunSound();
 
     this.range = range; //射程是无限的，但单位会在这个距离停下
-    this.PreFireRange = PreFireRange; // 默认超出range也开火，否则在这个距离内再开火
+    // 单位 距离目标 PreFireRange 或者 2 倍 range 即可开火，单位AI会尝试走到1倍 range 处。
+    this.PreFireRange = PreFireRange !== null ? PreFireRange : this.range * DefaultPrefireRangeMul;
+    // Range_Max 为子弹消失距离，默认为 3.5倍 range
+    this.Range_Max = Range_Max !== null ? Range_Max : this.range * DefaultMaxRangeMul;
 
     this.wname = wname;
 
@@ -198,7 +203,7 @@ class GunBasic {
     }
 
     //判断距离阶段，超出距离不开火
-    if (this.PreFireRange && unit_distance(attacker, target) > this.PreFireRange) {
+    if (unit_distance(attacker, target) > this.PreFireRange) {
       return;
     }
 
@@ -217,6 +222,7 @@ class GunBasic {
     }
     return;
   }
+
   /**
    * 根据指定参数生成子弹。
    * @param {number} x - 子弹发射点的x坐标。
@@ -284,6 +290,7 @@ class InstaWeaponBasic extends GunBasic {
     magsize = 30,
     range = 600, //和普通武器不同，范围之外不会攻击
     ReloadTime = null, //ms, 如果不手动指定，则自动计算出来
+    PreFireRange = null,
     // projectile = Bullet, //没有投射物，瞬间击中，不会偏移。
     // recoil = 5, //不会偏移
   } = {}) {
@@ -295,6 +302,9 @@ class InstaWeaponBasic extends GunBasic {
       magsize,
       range,
       ReloadTime,
+      // 即时命中/近战武器，强制设置 PreFireRange 为 range + 1，避免在 2倍 range 处空挥
+      PreFireRange: PreFireRange !== null ? PreFireRange : range + 1,
+      // InstaWeapon 不需要 Range_Max (无子弹实体)
     });
   }
 
