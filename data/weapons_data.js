@@ -7,7 +7,7 @@ export default {
     rpm: 700,
     damage: 25,
     recoil: 4.5,
-    range: 600, // 单位会在这个距离停下
+    range: 600, // 单位会在这个距离停下, 子弹伤害衰减的基准距离
     // PreFireRange:1200, // 单位 距离目标 PreFireRange 或者 2 倍 range 即可开火
     // Range_Max:2100,  // 子弹消失距离, 默认为 3.5倍 range
     ReloadTime: 5000,

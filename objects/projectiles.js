@@ -20,7 +20,7 @@ export class Bullet extends BulletBasic {
   name = "Bullet";
   damage_text_always = false; //无论是否DEBUG模式，都显示伤害
   damage_text_affix = "";
-  EndLife_warning = true;
+  EndLife_warning = false; // 武器普遍限制距离 之后，默认关闭
   first_frame = true; //第一帧
 
   /**
