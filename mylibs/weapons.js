@@ -69,9 +69,7 @@ class GunBasic {
 
     // 换弹时间如果没有手动指定，则会根据伤害、弹夹大小、射速、换弹时间计算
     this.ReloadTime =
-      ReloadTime !== null
-        ? ReloadTime
-        : Math.min(this.dps_burst * 10 + this.damage * 90, 15_000);
+      ReloadTime !== null ? ReloadTime : Math.min(this.dps_burst * 10 + this.damage * 90, 15_000);
   }
 
   get dps_burst() {
@@ -83,10 +81,7 @@ class GunBasic {
   }
 
   get dps_average() {
-    return (
-      this.mag_damage /
-      ((this.magsize / this.rpm) * 60 + this.ReloadTime / 1000)
-    );
+    return this.mag_damage / ((this.magsize / this.rpm) * 60 + this.ReloadTime / 1000);
   }
 
   /**
@@ -96,17 +91,11 @@ class GunBasic {
    */
   get_mag_info() {
     //武器伤害效率 = 实际总伤害 / 理论总伤害
-    let eff = (
-      (this.stat_damage_total / this.stat_damage_estimate) *
-      100
-    ).toFixed(1);
+    let eff = ((this.stat_damage_total / this.stat_damage_estimate) * 100).toFixed(1);
 
     if (this.reloading) {
       let reload_time = (this.reloading_endTime - game.time_now) / 1000;
-      let msg =
-        reload_time < 0
-          ? `${this.magsize}/${this.magsize}`
-          : `${reload_time.toFixed(1)}s`;
+      let msg = reload_time < 0 ? `${this.magsize}/${this.magsize}` : `${reload_time.toFixed(1)}s`;
       return `${this.wname} | ${msg} | ${eff}% `;
     } else {
       return `${this.wname} | ${this.mag}/${this.magsize} | ${eff}%`;
@@ -129,6 +118,34 @@ class GunBasic {
       dps_average: Math.round(this.dps_average),
       reloadSeconds: Math.round(this.ReloadTime / 1000),
     };
+  }
+
+  // --- 手动换弹 ---
+  manual_reload(x, y) {
+    // 1. 如果弹匣已经是满的，不需要换弹
+    if (this.mag >= this.magsize) return;
+
+    // 2. 如果已经在换弹中，不要打断（否则会重置时间）
+    if (this.reloading) return;
+
+    // 3. 触发换弹逻辑
+    this.reloading = true;
+
+    // 可以选择是否给予战术换弹奖励（例如比空仓换弹快），这里暂时保持原速
+    let ReloadTime = this.reloading_boost ? this.ReloadTime / 2 : this.ReloadTime;
+    this.reloading_endTime = game.time_now + ReloadTime;
+
+    world.CanvasPrompts.push(
+      new CanvasTextPrompt({
+        text: "🔃",
+        x,
+        y,
+        size: 16,
+        vy: -1,
+        color: "yellow",
+        lifetime: 2300,
+      })
+    );
   }
 
   /**
@@ -175,18 +192,13 @@ class GunBasic {
     //判断弹匣，进入装弹阶段
     if (this.mag <= 0) {
       this.reloading = true;
-      let reloadtime = this.reloading_boost
-        ? this.ReloadTime / 2
-        : this.ReloadTime;
+      let reloadtime = this.reloading_boost ? this.ReloadTime / 2 : this.ReloadTime;
       this.reloading_endTime = game.time_now + reloadtime;
       return;
     }
 
     //判断距离阶段，超出距离不开火
-    if (
-      this.PreFireRange &&
-      unit_distance(attacker, target) > this.PreFireRange
-    ) {
+    if (this.PreFireRange && unit_distance(attacker, target) > this.PreFireRange) {
       return;
     }
 
@@ -400,9 +412,7 @@ export class MeleeWeapon extends InstaWeaponBasic {
     if (this.reloading) {
       let reload_time = (this.reloading_endTime - game.time_now) / 1000;
       let msg =
-        reload_time < 0
-          ? `| ${this.magsize}/${this.magsize}`
-          : `| ${reload_time.toFixed(1)}s`;
+        reload_time < 0 ? `| ${this.magsize}/${this.magsize}` : `| ${reload_time.toFixed(1)}s`;
       return `${this.wname} |  ${msg}`;
     } else {
       return `${this.wname} |  ${this.mag}/${this.magsize}`;
@@ -418,9 +428,7 @@ export class GunFactory extends GunBasic {
    */
   static random_gun(special_chance = 0.1) {
     const gun_names =
-      Math.random() < special_chance
-        ? game.Guns_SpecialNames
-        : game.Guns_NormalNames;
+      Math.random() < special_chance ? game.Guns_SpecialNames : game.Guns_NormalNames;
 
     const random_name = gun_names[Math.floor(Math.random() * gun_names.length)];
     return new this(game.Guns_Data[random_name]);

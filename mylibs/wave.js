@@ -74,6 +74,15 @@ class WaveManager {
     if (this.game.is_full_second()) {
       this.hasEnemies = this.world.units.some((u) => u.color !== this.game.player_color);
 
+      // --- 清场后自动换弹逻辑 ---
+      if (!this.hasEnemies) {
+        this.world.units.forEach((u) => {
+          // 只对我军单位生效，且单位必须持有武器
+          if (u.color === this.game.player_color && u.weapon) {
+            u.weapon.manual_reload(u.x, u.y);
+          }
+        });
+      }
       // 如果没有敌军且不是第一波前，加速下一波
       if (!this.hasEnemies && this.waveNumber > 0) {
         if (this.timeToNextWave > 5000) {
