@@ -428,6 +428,7 @@ class Game {
   btn_units = document.getElementById("units").children;
 
   btn_dummy = document.getElementById("unitdummy");
+  btn_playerdummy = document.getElementById("playerdummy");
   debug_units_player = document.getElementById("debug_units_player");
   debug_units_enemy = document.getElementById("debug_units_enemy");
 

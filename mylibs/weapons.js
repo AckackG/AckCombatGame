@@ -1,10 +1,24 @@
 import { BulletFactory } from "../objects/projectiles.js";
-import { unit_distance, getRandomSign } from "./utils.js";
+import { unit_distance, get_intercept_position } from "./utils.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "./logic.js";
 import { game, world } from "./game.js";
 import { debug_gun, DefaultMaxRangeMul, DefaultPrefireRangeMul } from "./config.js";
 import soundManager from "./sound_manager.js";
+
+// 简单的弹速查询表，避免循环引用或复杂的工厂查询
+// 这些数值应与 projectiles.js 中的定义保持一致
+const PROJECTILE_SPEEDS = {
+  RifleBullet: 40,
+  PistolBullet: 34,
+  Buckshot: 24, // 平均速度
+  DragonBreath: 20,
+  High_Caliber: 50,
+  Grenade: 15,
+  Rocket: 15, // 火箭弹是加速的(3->?), 这里取一个经验平均值用于预判
+  MagneticAmmo: 120,
+  SubsonicBullet: 25,
+};
 
 class GunBasic {
   //统计相关
@@ -186,7 +200,7 @@ class GunBasic {
    * @returns {number} 返回生成的子弹数量，如果未射击则返回0。
    */
   attack(attacker, target) {
-    //装弹阶段
+    // 1. 装弹检查 (最快，优先)
     if (this.reloading) {
       if (game.time_now > this.reloading_endTime) {
         this.reloading = false;
@@ -197,7 +211,7 @@ class GunBasic {
       }
     }
 
-    //判断弹匣，进入装弹阶段
+    // 2. 弹匣检查 (快)
     if (this.mag <= 0) {
       this.reloading = true;
       let reloadtime = this.reloading_boost ? this.ReloadTime / 2 : this.ReloadTime;
@@ -205,45 +219,61 @@ class GunBasic {
       return;
     }
 
-    //判断距离阶段，超出距离不开火
+    // 3. 冷却检查 (Time Check)
+    // 只有当武器冷却完毕，准备好这一帧发射时，才进行后续昂贵的距离计算和预瞄计算
+    // 这样避免了在冷却期间每帧都在做 Math.sqrt 和解方程
+    let nowTime = game.time_now;
+    let deltaTime = nowTime - this.frame_lastTime;
+
+    if (deltaTime <= this.rate) {
+      return; // 武器没到下一发的frame，直接退出
+    }
+
+    // 4. 距离检查 (Heavy Math: 开方运算)
+    // 既然已经决定要开火了，现在才检查是否在射程内
     if (unit_distance(attacker, target) > this.PreFireRange) {
       return;
     }
 
-    //射击阶段，考虑game.targetFPS,需要跳过一些frame
-    let nowTime = game.time_now;
-    let deltaTime = nowTime - this.frame_lastTime;
+    // 5. 预瞄计算 (Heavy Math: 解一元二次方程) & 射击
+    let x = attacker.x;
+    let y = attacker.y;
+    let target_x = target.x;
+    let target_y = target.y;
 
-    if (deltaTime > this.rate) {
-      let x = attacker.x;
-      let y = attacker.y;
-      let target_x = target.x;
-      let target_y = target.y;
-      this.mag--;
-      this.frame_lastTime = nowTime - (deltaTime % this.rate);
-      this._generate_bullets(x, y, target_x, target_y, attacker);
+    // 只有开启了预瞄，且不是即时命中武器
+    if (attacker.can_preaim && PROJECTILE_SPEEDS[this.projectile]) {
+      const bullet_speed = PROJECTILE_SPEEDS[this.projectile];
+      const aim_pos = get_intercept_position(attacker, target, bullet_speed);
+
+      target_x = aim_pos.x;
+      target_y = aim_pos.y;
     }
-    return;
+
+    // 更新开火时间并生成子弹
+    this.mag--;
+    this.frame_lastTime = nowTime - (deltaTime % this.rate);
+    this._generate_bullets(x, y, target_x, target_y, attacker);
   }
 
   /**
    * 根据指定参数生成子弹。
-   * @param {number} x - 子弹发射点的x坐标。
-   * @param {number} y - 子弹发射点的y坐标。
+   * @param {number} start_x - 子弹发射点的x坐标。
+   * @param {number} start_y - 子弹发射点的y坐标。
    * @param {number} target_x - 子弹的目标x坐标。
    * @param {number} target_y - 子弹的目标y坐标。
    * @param {Object} source_unit - 发射子弹的单位对象。
    * @returns {number} estimated_damage - 预估的总伤害值。
    */
-  _generate_bullets(x, y, target_x, target_y, source_unit) {
+  _generate_bullets(start_x, start_y, target_x, target_y, source_unit) {
     // 计算目标距离，用于传递给工厂计算空爆时间
-    const target_dist = Math.hypot(target_x - x, target_y - y);
+    const target_dist = Math.hypot(target_x - start_x, target_y - start_y);
 
     // 循环爆发次数，每次生成一颗子弹
     for (let i = 0; i < this.burst; i++) {
       // 计算目标位置与发射位置的水平和垂直距离
-      let dx = target_x - x;
-      let dy = target_y - y;
+      let dx = target_x - start_x;
+      let dy = target_y - start_y;
 
       // 计算子弹的初始角度，基于目标方向
       let angle = Math.atan2(dy, dx);
@@ -260,8 +290,8 @@ class GunBasic {
 
       world.bullets.push(
         BulletFactory[this.projectile]({
-          x,
-          y,
+          x: start_x,
+          y: start_y,
           angle,
           source_unit,
           source_weapon: this,
@@ -269,7 +299,7 @@ class GunBasic {
         })
       );
     }
-    soundManager.play(this.soundType, { position: { x, y } });
+    soundManager.play(this.soundType, { position: { x: start_x, y: start_y } });
   }
 }
 

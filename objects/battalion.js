@@ -93,4 +93,28 @@ export class Battalion {
     unit.combat_dodge_chance = 0.3; //战术平移概率
     return unit;
   }
+
+  /**
+   * 静态方法：生成并返回一个玩家测试dummy，会预瞄。
+   *
+   * @param {number} x - 单位的x坐标，用于确定单位在游戏世界中的水平位置。
+   * @param {number} y - 单位的y坐标，用于确定单位在游戏世界中的垂直位置。
+   * @param {string} color - 单位的颜色，默认为"blue" - 敌军
+   * @returns {Unit} 返回一个新的步兵单位实例，已配置好基本属性和战斗行为参数。
+   */
+  static spawn_playerElite(x, y, color = "grey") {
+    let unit = new Unit({
+      x,
+      y,
+      color,
+      size: 10,
+      speed: 5,
+      maxhp: 2000,
+      weapon: GunFactory.random_gun(0.25),
+    });
+    unit.can_preaim = true;
+    unit.combat_threat_chance = 0.3; //选择危险目标而不是就近的概率
+    unit.combat_dodge_chance = 0.3; //战术平移概率
+    return unit;
+  }
 }

@@ -26,6 +26,11 @@ export class Unit extends EntityBasic {
 
   dead = false;
 
+  // 用于被预瞄计算
+  can_preaim = false; // 是否可以预瞄(Heavy Math)
+  moved_x = 0;
+  moved_y = 0;
+
   border_color = "black";
 
   combat_dodge_chance = 0.1; //战术平移概率
@@ -443,6 +448,19 @@ export class Unit extends EntityBasic {
   }
 
   _move() {
+    // 用于PREAIM,记录帧开始时的位置
+    const startX = this.x;
+    const startY = this.y;
+
+    this.__move();
+
+    // 用于PREAIM,计算本帧的实际位移速度 (Actual Velocity)
+    // 用于PREAIM,这解决了“单位停下但 dx/dy 仍不为0”导致预瞄打偏的问题
+    this.moved_x = this.x - startX;
+    this.moved_y = this.y - startY;
+  }
+
+  __move() {
     // *** RTS 逻辑核心 ***
 
     // 优先级 1: 手动移动指令

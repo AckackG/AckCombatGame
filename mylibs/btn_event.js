@@ -390,6 +390,11 @@ function register_debugunit() {
     placing.placing_classes = [Dummy];
     placing.placing_cost = 0;
   });
+
+  //敌军DUMMY单位 button event，测伤害用的
+  game.btn_playerdummy.addEventListener("click", (e) => {
+    world.units.push(Battalion.spawn_playerElite(1000, 1000));
+  });
 }
 
 // 随机摆放单位，用于测试战斗

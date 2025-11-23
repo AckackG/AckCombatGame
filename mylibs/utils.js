@@ -69,12 +69,8 @@ class WeaponStat {
   get_report() {
     let r = [];
     this.weapons.forEach((value, key, map) => {
-      value.accurate = parseFloat(value.shots_hit / value.shots_fired).toFixed(
-        2
-      );
-      value.dmg_efficiency = parseFloat(
-        value.damage_hit / value.damage_fired
-      ).toFixed(2);
+      value.accurate = parseFloat(value.shots_hit / value.shots_fired).toFixed(2);
+      value.dmg_efficiency = parseFloat(value.damage_hit / value.damage_fired).toFixed(2);
       r.push(value);
       value.dps_finnal = value.dps_average * value.dmg_efficiency;
     });
@@ -211,4 +207,65 @@ export function isBulletIntersect(bullet, unit) {
     unit.y,
     unit.size + bullet.size
   );
+}
+
+/**
+ * 计算预瞄拦截点 (Interception Point)
+ * 求解一元二次方程: |Target + V*t - Shooter|^2 = (S*t)^2
+ *
+ * @param {Object} shooter - 射击者 {x, y}
+ * @param {Object} target - 目标 {x, y, dx, dy, vx, vy}
+ * @param {number} v_bullet - 子弹速度
+ * @returns {Object} 预测的 {x, y}。如果无法拦截（目标比子弹快且在远离），返回目标当前位置。
+ */
+export function get_intercept_position(shooter, target, v_bullet) {
+  // 相对位置向量
+  const dx = target.x - shooter.x;
+  const dy = target.y - shooter.y;
+
+  // 目标速度向量
+  // 优先使用实际速度 (vx, vy)，因为 MoveableObject 的 dx,dy 可能在单位静止时仍保持非零值
+  const vx = target.moved_x !== undefined ? target.moved_x : target.dx || 0;
+  const vy = target.moved_y !== undefined ? target.moved_y : target.dy || 0;
+
+  // 求解 at^2 + bt + c = 0
+  // a = V_target^2 - V_bullet^2
+  const a = vx * vx + vy * vy - v_bullet * v_bullet;
+  // b = 2 * (D . V_target)
+  const b = 2 * (dx * vx + dy * vy);
+  // c = D^2
+  const c = dx * dx + dy * dy;
+
+  // 判别式
+  const delta = b * b - 4 * a * c;
+
+  let t = 0;
+
+  if (Math.abs(a) < 0.0001) {
+    // 目标速度 ≈ 子弹速度，退化为线性方程 bt + c = 0
+    if (Math.abs(b) > 0.0001) {
+      t = -c / b;
+    } else {
+      // 无法拦截
+      return { x: target.x, y: target.y };
+    }
+  } else if (delta >= 0) {
+    // 两个解，取最小正解
+    const t1 = (-b - Math.sqrt(delta)) / (2 * a);
+    const t2 = (-b + Math.sqrt(delta)) / (2 * a);
+
+    if (t1 > 0 && t2 > 0) t = Math.min(t1, t2);
+    else if (t1 > 0) t = t1;
+    else if (t2 > 0) t = t2;
+    else return { x: target.x, y: target.y }; // 时间为负，无法拦截
+  } else {
+    // 无解（目标太快追不上），直接打当前位置
+    return { x: target.x, y: target.y };
+  }
+
+  // 计算预测位置 P = T + V*t
+  return {
+    x: target.x + vx * t,
+    y: target.y + vy * t,
+  };
 }
