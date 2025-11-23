@@ -91,7 +91,7 @@ btn_sandbox.addEventListener("click", () => startGame("SANDBOX"));
 btn_campaign.addEventListener("click", () => startGame("CAMPAIGN"));
 // --- 结束：主菜单逻辑 ---
 
-//重启游戏按钮注册
+// 重启游戏按钮注册
 btn_StartGame.addEventListener("click", () => {
   placing.reset_units_btn();
   game.start_game();
@@ -440,7 +440,7 @@ function register_combattest() {
       new Unit({
         x: pos_center.x,
         y: pos_center.y,
-        color: "grey",
+        color: "pink",
         maxhp: 5000,
         size: 12,
         speed: 1.5,

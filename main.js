@@ -18,11 +18,10 @@ waveManager.init(world, game);
 // 注意：需要 .bind(waveManager) 来确保 update 函数内部的 this 指向 waveManager 实例
 game.update_callbacks.push(waveManager.update.bind(waveManager));
 
-// 监听 "Start Campaign" 按钮的点击事件
+// 重置游戏，重启战役
 const btnStartCampaign = document.getElementById("button1");
 btnStartCampaign.addEventListener("click", () => {
-  // game.currentMode = "CAMPAIGN";
-  game.start_game();
+  // game.start_game();
   waveManager.start(); // 在游戏开始时，手动启动波次管理器
 });
 

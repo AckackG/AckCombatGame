@@ -374,7 +374,7 @@ class Game {
 
   //玩家相关
   money = 0;
-  player_color = "black";
+  player_color = "grey";
 
   //GUI相关
   btn_StartGame = document.getElementById("button1");

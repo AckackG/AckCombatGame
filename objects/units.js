@@ -5,6 +5,7 @@ import { GunFactory, MeleeWeapon } from "../mylibs/weapons.js";
 import { EntityBasic } from "./obj_basic.js";
 import { game, world } from "../mylibs/game.js";
 import soundManager from "../mylibs/sound_manager.js";
+import { getCachedCircle, spriteScale } from "../mylibs/SpriteCache.js";
 
 const pos_range = world.pos_range;
 
@@ -377,9 +378,9 @@ export class Unit extends EntityBasic {
     let hpPercent = this.hp / this.maxhp;
 
     // Determine the color of the HP bar
-    if (hpPercent > 0.4) {
+    if (hpPercent > 0.5) {
       ctx.fillStyle = "green";
-    } else if (hpPercent > 0.2) {
+    } else if (hpPercent > 0.25) {
       ctx.fillStyle = "orange";
     } else {
       ctx.fillStyle = "red";
@@ -394,6 +395,7 @@ export class Unit extends EntityBasic {
     ctx.fillRect(barX, barY, barWidth * hpPercent, barHeight);
 
     // Draw the border of the HP bar
+    ctx.lineWidth = 1;
     ctx.strokeStyle = "black";
     ctx.strokeRect(barX, barY, barWidth, barHeight);
 
@@ -492,20 +494,18 @@ export class Unit extends EntityBasic {
   }
 
   #render_circle(ctx) {
-    ctx.fillStyle = this.color;
-    //圆形
-    ctx.beginPath(); // 开始绘制新路径
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); // 绘制一个圆心坐标为 (100, 100)，半径为 50 的圆
-    ctx.fill(); // 填充圆
+    const sprite = getCachedCircle(this.color, this.size, this.border_color);
 
-    // 设置边框样式
-    ctx.strokeStyle = this.border_color; // 边框颜色
-    ctx.lineWidth = 1; // 边框宽度，单位为像素
+    // 原始图片是放大了 spriteScale 倍的
+    // 所以我们在画的时候，要把宽高除以 spriteScale
+    const drawWidth = sprite.width / spriteScale;
+    const drawHeight = sprite.height / spriteScale;
 
-    // 再次绘制边框
-    ctx.beginPath(); // 开始绘制新路径
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2); // 绘制圆
-    ctx.stroke(); // 绘制边框
+    const offset = drawWidth / 2;
+
+    // drawImage 支持 5 个参数或 9 个参数
+    // drawImage(img, x, y, width, height) -> 这里指定宽和高，浏览器会自动缩放
+    ctx.drawImage(sprite, this.x - offset, this.y - offset, drawWidth, drawHeight);
   }
 
   render(ctx) {

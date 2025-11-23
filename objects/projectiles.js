@@ -4,6 +4,7 @@ import { deal_damage, target_killed } from "../mylibs/logic.js";
 import { DOT } from "../mylibs/effects.js";
 import { BulletBasic, EntityBasic } from "./obj_basic.js";
 import { game, world } from "../mylibs/game.js";
+import { getCachedCircle, spriteScale } from "../mylibs/SpriteCache.js";
 
 const pos_range = world.pos_range;
 
@@ -296,10 +297,18 @@ export class Bullet extends BulletBasic {
   }
 
   #render_bullet(ctx) {
-    ctx.fillStyle = this.color;
-    ctx.beginPath();
-    ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
-    ctx.fill();
+    const sprite = getCachedCircle(this.color, this.size);
+
+    // 原始图片是放大了 spriteScale 倍的
+    // 所以我们在画的时候，要把宽高除以 spriteScale
+    const drawWidth = sprite.width / spriteScale;
+    const drawHeight = sprite.height / spriteScale;
+
+    const offset = drawWidth / 2;
+
+    // drawImage 支持 5 个参数或 9 个参数
+    // drawImage(img, x, y, width, height) -> 这里指定宽和高，浏览器会自动缩放
+    ctx.drawImage(sprite, this.x - offset, this.y - offset, drawWidth, drawHeight);
   }
 
   #render_tracer(ctx) {

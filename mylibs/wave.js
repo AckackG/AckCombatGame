@@ -22,6 +22,7 @@ class WaveManager {
   }
 
   start() {
+    if (this.game.currentMode !== "CAMPAIGN") return;
     this.waveNumber = 0;
     this.timeToNextWave = 10000; // 游戏开始后第一波的准备时间
     this.spawnType = "monster";
@@ -42,6 +43,9 @@ class WaveManager {
   }
 
   update(dt) {
+    //
+    if (this.game.currentMode !== "CAMPAIGN") return;
+
     // 检查基地是否被摧毁
     if (this.playerBase && this.playerBase.dead) {
       if (!this.game.isGameOver) {
