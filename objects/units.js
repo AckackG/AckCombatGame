@@ -15,6 +15,8 @@ export class Unit extends EntityBasic {
   angle = 0;
 
   effect_list = [];
+  effect_map = new Map(); // 用于按类型索引DOT效果
+
   dead = false;
 
   border_color = "black";
@@ -187,12 +189,53 @@ export class Unit extends EntityBasic {
   }
 
   /**
-   * 添加效果到效果列表中。
-   *
-   * @param {DOT} effect - 要添加的效果对象。
+   * 添加效果到效果列表中（优化版）
+   * @param {DOT} effect - 要添加的效果对象
    */
   add_effect(effect) {
-    this.effect_list.push(effect);
+    // 如果不是DOT效果或没有name，直接添加
+    if (!(effect instanceof DOT) || !effect.name) {
+      this.effect_list.push(effect);
+      return;
+    }
+
+    // 检查是否已存在相同名称的DOT
+    const existingDOT = this.effect_map.get(effect.name);
+
+    if (existingDOT && !existingDOT.dead) {
+      // 合并到现有的DOT
+      existingDOT.merge(effect);
+
+      // 显示合并提示
+      // world.CanvasPrompts.push(
+      //   new CanvasTextPrompt({
+      //     text: `${effect.render_affix} STACKED`,
+      //     unit: this,
+      //     color: effect.color,
+      //     size: 12,
+      //     lifetime: 800,
+      //     vy: -0.5,
+      //     fade: true,
+      //   })
+      // );
+    } else {
+      // 添加新的DOT
+      this.effect_list.push(effect);
+      this.effect_map.set(effect.name, effect);
+
+      // 显示初次应用提示
+      // world.CanvasPrompts.push(
+      //   new CanvasTextPrompt({
+      //     text: `${effect.render_affix} APPLIED`,
+      //     unit: this,
+      //     color: effect.color,
+      //     size: 12,
+      //     lifetime: 800,
+      //     vy: -0.5,
+      //     fade: true,
+      //   })
+      // );
+    }
   }
 
   /**
@@ -532,7 +575,14 @@ export class Unit extends EntityBasic {
       effect.update();
     });
 
-    this.effect_list = this.effect_list.filter((x) => !x.dead);
+    // 清理死亡的效果
+    this.effect_list = this.effect_list.filter((effect) => {
+      if (effect.dead && effect instanceof DOT && effect.name) {
+        // 从映射中移除
+        this.effect_map.delete(effect.name);
+      }
+      return !effect.dead;
+    });
   }
   /**
    * 更新角色的健康点数（HP）。
