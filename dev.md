@@ -50,6 +50,7 @@
   - [ ] 复杂版：后坐力随着开火增加，随着时间衰减。新属性：recoil,recoil_max,recoil_increment,recoil_decay |喷子除外
 - [x] **武器距离重做**，2倍range开火，3.5倍rang子弹消失，武器range2属性覆盖消失距离
 - [x] **子弹随着距离伤害衰减曲线**，1倍 range 以上开始衰减，直到3.5倍极限距离的25%
+- [x] 爆炸武器如rpg向目标地点开火，而不是靠碰撞才能引爆
 - [ ] 瞬间击中武器也用 bullet 逻辑，取消instaweapon?，bullet加参数 target,insta 。用于瞬间击中和追踪弹。有必要用同一个逻辑吗？还是分开两个比较好呢？
 - [x] 子弹曳光属性，和曳光颜色。用多个alpha不同的粗细的直线模拟。参考平移指示线，
 - [x] 合并 Entity 和 Human，改名为 Unit(战斗单位), Monster(近战单位), Fighter(玩家单位), Turret(固定单位)

@@ -236,6 +236,9 @@ class GunBasic {
    * @returns {number} estimated_damage - 预估的总伤害值。
    */
   _generate_bullets(x, y, target_x, target_y, source_unit) {
+    // 计算目标距离，用于传递给工厂计算空爆时间
+    const target_dist = Math.hypot(target_x - x, target_y - y);
+
     // 循环爆发次数，每次生成一颗子弹
     for (let i = 0; i < this.burst; i++) {
       // 计算目标位置与发射位置的水平和垂直距离
@@ -262,6 +265,7 @@ class GunBasic {
           angle,
           source_unit,
           source_weapon: this,
+          target_dist, // 传入目标距离
         })
       );
     }

@@ -512,8 +512,11 @@ export class BulletFactory {
     return b;
   }
 
-  static Grenade({ x, y, angle, source_unit, source_weapon }) {
-    let range_limit = source_weapon.PreFireRange + Math.random() * 100 - 100; //Grenade 650-750距离后自然爆炸
+  static Grenade({ x, y, angle, source_unit, source_weapon, target_dist }) {
+    // 榴弹逻辑修改：不再使用 PreFireRange 随机，而是精确计算目标距离的飞行时间
+    // 稍微加一点点随机波动 (±30像素)，模拟抛射物的散布，看起来更自然
+    const dist = target_dist + (Math.random() - 0.5) * 60;
+
     let speed = 15;
     let b = new Bullet({
       x,
@@ -524,7 +527,8 @@ export class BulletFactory {
       speed,
       size: 4,
       exploding: true,
-      lifetime: (range_limit / speed) * (1000 / game.targetFPS),
+      // 动态计算 lifetime: (距离/速度) * 每帧时间(ms)
+      lifetime: (dist / speed) * (1000 / game.targetFPS),
     });
     b.pierce = 0;
     b.name = "Grenade";
@@ -539,8 +543,32 @@ export class BulletFactory {
     return b;
   }
 
-  static Rocket({ x, y, angle, source_unit, source_weapon }) {
-    let speed = 3;
+  static Rocket({ x, y, angle, source_unit, source_weapon, target_dist }) {
+    let speed = 3; // 初始速度 v0
+    let acceleration = 0.5; // 加速度 a
+
+    // 运动学公式求解时间 T (帧数)
+    // S = v0*t + 0.5*a*t^2 => 0.5*a*t^2 + v0*t - S = 0
+    // 解一元二次方程: t = (-b + sqrt(b^2 - 4ac)) / 2a
+    // A = 0.5 * a, B = speed, C = -target_dist
+
+    const A = 0.5 * acceleration;
+    const B = speed;
+    const C = -target_dist;
+
+    const delta = B * B - 4 * A * C;
+    let t_frames = 0;
+
+    if (delta >= 0) {
+      // 取正根
+      t_frames = (-B + Math.sqrt(delta)) / (2 * A);
+    } else {
+      // 理论上不可能发生(距离为负才可能)，兜底逻辑
+      t_frames = target_dist / speed;
+    }
+
+    const lifetime = t_frames * (1000 / game.targetFPS);
+
     let b = new Bullet({
       x,
       y,
@@ -550,12 +578,13 @@ export class BulletFactory {
       speed,
       size: 5,
       exploding: true,
-      acceleration: 0.5,
+      acceleration,
+      lifetime: lifetime,
     });
     b.pierce = 0;
     b.name = "Rocket";
     b.EndLife_warning = false;
-    b.damage_text_always = false; //卡顿
+    b.damage_text_always = false;
     b.damage_text_affix = "💥";
 
     b.exploding_damage = 300;
