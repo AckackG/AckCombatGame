@@ -250,6 +250,13 @@ export class Unit extends EntityBasic {
    * 如果没有目标，则根据一定概率选择最近的目标或最危险的目标进行攻击。
    */
   attack() {
+    // 即时检测目标是否死亡
+    if (this.target && this.target.dead) {
+      this.target = null;
+      // 立即重新寻敌！
+      this._find_target();
+    }
+
     if (this.target) {
       this.weapon.attack(this, this.target);
     } else {
