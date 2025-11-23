@@ -669,17 +669,17 @@ export class Fighter extends Unit {
     //击杀加速下一次换弹!
     this.weapon.boost_reload(this.x, this.y);
 
-    const expNeeded = 1000 + this.level * 250;
+    const expNeeded = 1000 + this.level * 350;
     if (this.exp >= expNeeded) {
       this.level++;
       this.exp -= expNeeded;
 
       // 提升属性
       this.maxhp += 100;
-      this.hp = this.maxhp; // 回血
+      this.hp = Math.min(this.hp + this.maxhp * 0.25, this.maxhp); // 回血25%
       this.speed = Math.min(this.speed + 0.2, 5); // 微量提升移速
       this.hp_regen += 2;
-      this.weapon.ReloadTime = Math.max(500, this.weapon.ReloadTime * 0.9); // 减少10%换弹时间
+      this.weapon.ReloadTime = Math.max(500, this.weapon.ReloadTime * 0.95); // 减少5%换弹时间
       this.weapon.recoil = Math.max(0.1, this.weapon.recoil * 0.9); // 减少10%后坐力
 
       // 视觉与听觉反馈
@@ -689,8 +689,8 @@ export class Fighter extends Unit {
           text: "LVL UP!",
           unit: this,
           color: "gold",
-          size: 15,
-          lifetime: 2000,
+          size: 18,
+          lifetime: 4000,
           vy: -1,
         })
       );
@@ -703,8 +703,8 @@ export class Turret extends Fighter {
   constructor({ x, y, weapon, size = 25, color = game.player_color, maxhp = 8000 } = {}) {
     //炮塔用任何武器都加强
     let TurretGun = GunFactory.random_gun(0.5);
-    TurretGun.recoil /= 1.5;
-    TurretGun.ReloadTime /= 1.5;
+    TurretGun.recoil /= 1.2;
+    TurretGun.ReloadTime /= 1.2;
     TurretGun.burst *= 2;
     TurretGun.magsize *= 2;
 

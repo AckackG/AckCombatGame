@@ -258,4 +258,16 @@ export class DOT extends Effect {
       render_affix: "🔥",
     });
   }
+
+  static poisoning(unit, source_weapon) {
+    return new this({
+      unit,
+      source_weapon,
+      lifetime: 10000,
+      damage_per_second: 2,
+      name: "Toxic", // 使用name作为标识符
+      color: "green",
+      render_affix: "☠️",
+    });
+  }
 }
