@@ -616,6 +616,7 @@ export class Unit extends EntityBasic {
   }
 
   #render_hpbar(ctx) {
+    ctx.save();
     // Calculate HP percentage
     let hpPercent = this.hp / this.maxhp;
 
@@ -630,7 +631,7 @@ export class Unit extends EntityBasic {
 
     // Draw the HP bar
     const barWidth = this.size * 3; // Width of the HP bar
-    const barHeight = 8; // Height of the HP bar
+    const barHeight = 10; // Height of the HP bar (从8改到10，以便容纳文字)
     const barX = this.x - barWidth / 2; // Center the bar above the unit
     const barY = this.y - 12 - this.size; // Position the bar a little above the unit
 
@@ -643,8 +644,15 @@ export class Unit extends EntityBasic {
 
     // Show HP text
     ctx.fillStyle = "white";
-    let hp_text = parseInt(this.hp);
-    ctx.fillText(hp_text, this.x - this.size, this.y - 3 - this.size);
+    ctx.font = "9px Arial"; // 显式设置字体，防止继承其他地方的大字体
+    ctx.textAlign = "center"; // 水平居中
+    ctx.textBaseline = "middle"; // 垂直居中
+
+    let hp_text = Math.ceil(this.hp); // 向上取整，避免0.5血显示为0
+
+    // 参数4: barWidth，强制文字在宽度不足时自动压缩，限制在边框内
+    ctx.fillText(hp_text, barX + barWidth / 2, barY + barHeight / 2, barWidth);
+    ctx.restore();
   }
 
   /**
