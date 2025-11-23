@@ -1,10 +1,15 @@
-import { getRandomSign, unit_distance } from "../mylibs/utils.js";
+import { getRandomSign, unit_distance, point_distance } from "../mylibs/utils.js";
 import { CanvasTextPrompt, CanvasCircle } from "../mylibs/CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "../mylibs/logic.js";
 import { DOT } from "../mylibs/effects.js";
 import { BulletBasic, EntityBasic } from "./obj_basic.js";
 import { game, world } from "../mylibs/game.js";
 import { getCachedCircle, spriteScale } from "../mylibs/SpriteCache.js";
+import {
+  DefaultAttenuationRangeMul,
+  DefaultMaxRangeMul,
+  MaxBulletDamageDropPer,
+} from "../mylibs/config.js";
 
 const pos_range = world.pos_range;
 
@@ -58,6 +63,11 @@ export class Bullet extends BulletBasic {
     tracer_count = null,
   } = {}) {
     super({ x, y, speed });
+
+    // 记录初始坐标，用于伤害衰减计算
+    this.startX = x;
+    this.startY = y;
+
     //运动相关
     this.angle = angle;
     this.dx = Math.cos(this.angle) * this.speed;
@@ -226,9 +236,25 @@ export class Bullet extends BulletBasic {
    *
    * 此函数负责在击中目标后执行一系列的后续动作，包括计算伤害、应用效果和更新子弹状态。
    * @param {Object} target - 被击中的目标对象。
+   * @param {number} [damage] - 伤害值。如果不传，则自动计算当前衰减后的伤害。
    */
-  onHit(target, damage = this.damage) {
-    this._onHit_damage(target, damage);
+  onHit(target, damage) {
+    // 如果没有传入具体伤害值(子弹碰撞伤害)，则计算衰减后的伤害
+    // 注意：这里 damage 如果是 undefined 则计算，如果是 0 则使用 0
+    const is_auto_calc = damage === undefined;
+    const final_damage = is_auto_calc ? this._calculate_attenuated_damage() : damage;
+
+    // --- DEBUG LOG: 只有在自动计算衰减且开启DEBUG模式时输出 ---
+    if (game.is_DebugMode() && is_auto_calc) {
+      const dist = Math.hypot(this.x - this.startX, this.y - this.startY);
+      const percent = ((final_damage / this.damage) * 100).toFixed(1);
+      console.log(
+        `[ATTENUATION] ${this.name}(${this.source_weapon.wname}) ` +
+          `| Dist: ${dist.toFixed(0)} / ${this.source_weapon.range} ` +
+          `| Dmg: ${this.damage} -> ${final_damage.toFixed(1)} (${percent}%)`
+      );
+    }
+    this._onHit_damage(target, final_damage);
     this.onHit_ApplyEffect(target); //空函数，自定义效果
     this._onHit_UpdateBullet(target);
   }
@@ -248,6 +274,44 @@ export class Bullet extends BulletBasic {
       // 如果子弹不再具有穿透能力，标记子弹为死亡
       this.dead = true;
     }
+  }
+
+  /**
+   * 计算当前距离下的伤害值 (含衰减逻辑)
+   * 1.5倍 range 开始衰减，Range_Max (或3.5倍range) 处衰减至 25%
+   *
+   * @returns {number} 最终伤害值
+   */
+  _calculate_attenuated_damage() {
+    // 0 衰减系数直接返回原伤害 (如 RPG、狙击枪可能不需要衰减)
+    if (this.source_weapon.attenuation_factor === 0) {
+      return this.damage;
+    }
+
+    const dist = point_distance(this.startX, this.startY, this.x, this.y);
+    const range = this.source_weapon.range;
+    const start_drop = range * DefaultAttenuationRangeMul;
+    // 如果 Range_Max 未定义，兜底用 3.5 倍 range
+    const end_drop = this.source_weapon.Range_Max || range * DefaultMaxRangeMul;
+
+    // 尚未达到衰减距离
+    if (dist <= start_drop) {
+      return this.damage;
+    }
+
+    // 计算衰减比例 (0.0 ~ 1.0)
+    // 限制 dist 不超过 end_drop，防止伤害变成负数
+    const clamp_dist = Math.min(dist, end_drop);
+    const progress = (clamp_dist - start_drop) / (end_drop - start_drop);
+
+    // 最大衰减量：75% (即只剩 25%)
+    const max_drop_percent = MaxBulletDamageDropPer;
+
+    // 最终伤害比例 = 100% - (进度 * 最大衰减 * 衰减系数)
+    const current_damage_percent =
+      1 - progress * max_drop_percent * this.source_weapon.attenuation_factor;
+
+    return this.damage * current_damage_percent;
   }
 
   /**

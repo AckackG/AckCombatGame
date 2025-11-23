@@ -38,6 +38,7 @@ class GunBasic {
    * @param {number|null} ReloadTime 枪械的换弹时间（毫秒），如果为null，则根据其他属性计算得出。
    * @param {number|null} PreFireRange 默认超出range也开火，否则在这个距离内再开火
    * @param {number|null} Range_Max 子弹最大飞行距离，用于计算lifetime
+   * @param {number} attenuation_factor 衰减指数，0为不衰减，1为线性衰减至25%
    */
   constructor({
     wname = "GunBasic",
@@ -52,6 +53,7 @@ class GunBasic {
     PreFireRange = null,
     Range_Max = null,
     soundType = null,
+    attenuation_factor = 1, // 默认为 1，开启衰减
   } = {}) {
     this.damage = damage; //子弹伤害
     this.burst = burst; //每轮射击几发（霰弹）
@@ -68,6 +70,7 @@ class GunBasic {
     this.Range_Max = Range_Max !== null ? Range_Max : this.range * DefaultMaxRangeMul;
 
     this.wname = wname;
+    this.attenuation_factor = attenuation_factor;
 
     this.rate = (1000 / (rpm / 60)) * (game.targetFPS / 60); //每次发射间隔 ms
     this.mag = magsize;
