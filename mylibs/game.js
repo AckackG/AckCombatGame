@@ -271,6 +271,38 @@ class World {
     this.bullets = this.bullets.filter((x) => !x.dead);
   }
 
+  /**
+   * 绘制顶部距离标尺
+   * @param {CanvasRenderingContext2D} ctx
+   */
+  #render_ruler(ctx) {
+    ctx.save();
+    ctx.strokeStyle = "black";
+    ctx.fillStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.font = "bold 14px sans-serif";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "bottom"; // 文字基线设为底部，方便定位在刻度上方
+
+    // 遍历绘制刻度，从0到地图宽度，步长100
+    for (let x = 0; x <= this.pos_range.width; x += 100) {
+      const isBig = x % 500 === 0;
+      const tickLength = isBig ? 20 : 10; // 大标长20，小标长10
+
+      ctx.beginPath();
+      // 从边框线(y=0)向上延伸
+      ctx.moveTo(x, 0);
+      ctx.lineTo(x, -tickLength);
+      ctx.stroke();
+
+      // 大刻度显示数字
+      if (isBig) {
+        ctx.fillText(x, x, -tickLength - 2);
+      }
+    }
+    ctx.restore();
+  }
+
   render() {
     // 清空画布 (使用 setTransform 确保清空整个区域，不受当前缩放影响)
     this.ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -283,6 +315,9 @@ class World {
     this.ctx.strokeStyle = "#666"; // 深灰色边界
     this.ctx.lineWidth = 4;
     this.ctx.strokeRect(0, 0, this.pos_range.width, this.pos_range.height);
+
+    // 绘制标尺
+    this.#render_ruler(this.ctx);
 
     // 渲染 units
     const render_units_start = performance.now();
