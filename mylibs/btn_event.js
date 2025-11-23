@@ -3,7 +3,7 @@ import { Fighter, Unit, Turret, Monster, Dummy } from "../objects/units.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
 import { game, world } from "./game.js";
 import { Battalion } from "../objects/battalion.js";
-import { performanceCounter } from "./performance_counter.js";
+import { scatter_range } from "./config.js";
 
 const ctx = world.ctx;
 const canvas = world.canvas;
@@ -161,18 +161,30 @@ function drop_unit(x, y) {
     );
   }
   //摆放单位
+  const is_multiple = placing.placing_classes.length > 1;
   for (let unit_class of placing.placing_classes) {
     const weapon = placing.placing_weapon_name
       ? GunFactory.get_gun(placing.placing_weapon_name)
       : GunFactory.random_gun();
+
+    // random point offset
+    if (is_multiple) {
+      var offsetX = (Math.random() - 0.5) * scatter_range;
+      var offsetY = (Math.random() - 0.5) * scatter_range;
+    } else {
+      var offsetX = 0;
+      var offsetY = 0;
+    }
+
     let h = new unit_class({
-      x,
-      y,
+      x: x + offsetX,
+      y: y + offsetY,
       weapon,
       maxhp: placing.placing_hp,
       color: placing.placing_color,
     });
-    h.setMoveTarget(x, y);
+
+    // h.setMoveTarget(x + offsetX, y + offsetY);
     world.units.push(h);
   }
 }

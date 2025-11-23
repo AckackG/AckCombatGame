@@ -6,6 +6,7 @@ import { EntityBasic } from "./obj_basic.js";
 import { game, world } from "../mylibs/game.js";
 import soundManager from "../mylibs/sound_manager.js";
 import { getCachedCircle, spriteScale } from "../mylibs/SpriteCache.js";
+import { ManualControlTime } from "../mylibs/config.js";
 
 const pos_range = world.pos_range;
 
@@ -13,8 +14,8 @@ export class Unit extends EntityBasic {
   // 新增 RTS 状态属性
   isSelected = false;
   manualControlEndTime = 0; // 手动模式结束时间戳
-  commandMoveDest = null;   // {x, y} 手动移动目标
-  forcedTarget = null;      // Unit 手动强制攻击目标
+  commandMoveDest = null; // {x, y} 手动移动目标
+  forcedTarget = null; // Unit 手动强制攻击目标
 
   target_x = 0; //移动目标坐标x
   target_y = 0; //移动目标坐标y
@@ -250,20 +251,20 @@ export class Unit extends EntityBasic {
   _onkill(victim) {
     // console.log(`${this} unit kills ${victim}`);
   }
-  
+
   // --- RTS 指令接口 ---
 
   // 刷新手动控制计时器 (30秒)
   refreshManualControl() {
-    this.manualControlEndTime = game.time_now + 30000;
+    this.manualControlEndTime = game.time_now + ManualControlTime;
   }
 
   // 是否处于手动控制模式 (被选中 或 选中后30秒内)
   isManualMode() {
     // 只要被选中，就不断刷新计时器，永远保持 ManualMode
     if (this.isSelected) {
-        this.refreshManualControl(); 
-        return true;
+      this.refreshManualControl();
+      return true;
     }
     return game.time_now < this.manualControlEndTime;
   }
@@ -297,13 +298,13 @@ export class Unit extends EntityBasic {
   attack() {
     // 1. 优先处理强攻目标
     if (this.forcedTarget) {
-        if (this.forcedTarget.dead) {
-            // 强攻目标死亡，回退到普通状态
-            this.forcedTarget = null;
-            this.target = null; // 清除 target 以便 _find_target 重新运行
-        } else {
-            this.target = this.forcedTarget; // 锁定目标
-        }
+      if (this.forcedTarget.dead) {
+        // 强攻目标死亡，回退到普通状态
+        this.forcedTarget = null;
+        this.target = null; // 清除 target 以便 _find_target 重新运行
+      } else {
+        this.target = this.forcedTarget; // 锁定目标
+      }
     }
 
     // 2. 原有的自动攻击逻辑
@@ -443,36 +444,35 @@ export class Unit extends EntityBasic {
 
   _move() {
     // *** RTS 逻辑核心 ***
-    
+
     // 优先级 1: 手动移动指令
     if (this.commandMoveDest) {
-        const dist = Math.sqrt(
-            Math.pow(this.commandMoveDest.x - this.x, 2) + 
-            Math.pow(this.commandMoveDest.y - this.y, 2)
-        );
-        // 如果距离很近，认为到达，清除指令
-        if (dist < this.speed) {
-            this.commandMoveDest = null;
-        } else {
-            // 直接走向目标点，忽略其他逻辑
-            this.moveToXY(this.commandMoveDest.x, this.commandMoveDest.y);
-            return; 
-        }
+      const dist = Math.sqrt(
+        Math.pow(this.commandMoveDest.x - this.x, 2) + Math.pow(this.commandMoveDest.y - this.y, 2)
+      );
+      // 如果距离很近，认为到达，清除指令
+      if (dist < this.speed) {
+        this.commandMoveDest = null;
+      } else {
+        // 直接走向目标点，忽略其他逻辑
+        this.moveToXY(this.commandMoveDest.x, this.commandMoveDest.y);
+        return;
+      }
     }
 
     // 优先级 2: 手动模式下的行为抑制
     if (this.isManualMode()) {
-        // 在手动模式下，如果没有移动指令：
-        // 如果有强攻目标 -> 尝试靠近到射程内，如果在射程内则原地不动(不进行战术平移)
-        if (this.forcedTarget && !this.forcedTarget.dead) {
-            let dis = unit_distance(this, this.forcedTarget);
-            if (this.weapon.range < dis) {
-                 this._moveToTarget(this.forcedTarget.x, this.forcedTarget.y);
-            }
-            // 射程内什么都不做 = 站桩输出
+      // 在手动模式下，如果没有移动指令：
+      // 如果有强攻目标 -> 尝试靠近到射程内，如果在射程内则原地不动(不进行战术平移)
+      if (this.forcedTarget && !this.forcedTarget.dead) {
+        let dis = unit_distance(this, this.forcedTarget);
+        if (this.weapon.range < dis) {
+          this._moveToTarget(this.forcedTarget.x, this.forcedTarget.y);
         }
-        // 如果没有目标，或者普通自动寻敌的目标 -> 原地不动，禁止AI乱跑
-        return;
+        // 射程内什么都不做 = 站桩输出
+      }
+      // 如果没有目标，或者普通自动寻敌的目标 -> 原地不动，禁止AI乱跑
+      return;
     }
 
     // 优先级 3: 原始全自动 AI (30秒后恢复)
@@ -488,6 +488,10 @@ export class Unit extends EntityBasic {
       this._moveToTarget();
     }
     // 怪物后退逻辑
+    // 可能的优化，避免循环引用
+    // 在 Unit 类或 Base 类中，添加一个属性 is_monster = false。
+    // 在 Monster 类中，将 is_monster 设为 true。
+    // 在 _move 中判断：
     else if (this.target instanceof Monster && this.weapon.range * 0.85 > dis) {
       this.moveAwayFromUnit(this.target);
     }
@@ -497,15 +501,15 @@ export class Unit extends EntityBasic {
         this.moveStrafe(this.target, this.combat_dodge_to_left);
       }
       if (game.is_half_second() && this.combat_dodge_chance > Math.random()) {
-          // ... 原有的平移随机切换逻辑 ...
-          if (this.combat_dodge_moving && this.combat_dodge_chance / 2 > Math.random()) {
-              this.combat_dodge_moving = false;
-          } else {
-              this.combat_dodge_moving = true;
-              this.combat_dodge_to_left = this.combat_dodge_moving
-                  ? !this.combat_dodge_to_left
-                  : this.combat_dodge_to_left;
-          }
+        // ... 原有的平移随机切换逻辑 ...
+        if (this.combat_dodge_moving && this.combat_dodge_chance / 2 > Math.random()) {
+          this.combat_dodge_moving = false;
+        } else {
+          this.combat_dodge_moving = true;
+          this.combat_dodge_to_left = this.combat_dodge_moving
+            ? !this.combat_dodge_to_left
+            : this.combat_dodge_to_left;
+        }
       }
     }
   }
@@ -514,37 +518,37 @@ export class Unit extends EntityBasic {
   render(ctx) {
     // 绘制选中光环
     if (this.isSelected) {
-        ctx.save();
-        ctx.strokeStyle = "#0f0";
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        // 画一个椭圆或者圆在脚下
-        ctx.arc(this.x, this.y, this.size + 6, 0, Math.PI * 2);
-        ctx.stroke();
-        
-        // 如果有强制目标，画一条连接线表示锁定
-        if (this.forcedTarget && !this.forcedTarget.dead) {
-             ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
-             ctx.setLineDash([5, 5]);
-             ctx.lineWidth = 1;
-             ctx.beginPath();
-             ctx.moveTo(this.x, this.y);
-             ctx.lineTo(this.forcedTarget.x, this.forcedTarget.y);
-             ctx.stroke();
-        }
-        
-        // 如果有移动指令，画一条线到目标点
-        if (this.commandMoveDest) {
-             ctx.strokeStyle = "rgba(0, 255, 0, 0.5)";
-             ctx.setLineDash([2, 2]);
-             ctx.lineWidth = 1;
-             ctx.beginPath();
-             ctx.moveTo(this.x, this.y);
-             ctx.lineTo(this.commandMoveDest.x, this.commandMoveDest.y);
-             ctx.stroke();
-        }
+      ctx.save();
+      ctx.strokeStyle = "#0f0";
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      // 画一个椭圆或者圆在脚下
+      ctx.arc(this.x, this.y, this.size + 6, 0, Math.PI * 2);
+      ctx.stroke();
 
-        ctx.restore();
+      // 如果有强制目标，画一条连接线表示锁定
+      if (this.forcedTarget && !this.forcedTarget.dead) {
+        ctx.strokeStyle = "rgba(255, 0, 0, 0.5)";
+        ctx.setLineDash([5, 5]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.forcedTarget.x, this.forcedTarget.y);
+        ctx.stroke();
+      }
+
+      // 如果有移动指令，画一条线到目标点
+      if (this.commandMoveDest) {
+        ctx.strokeStyle = "rgba(0, 255, 0, 0.5)";
+        ctx.setLineDash([2, 2]);
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(this.x, this.y);
+        ctx.lineTo(this.commandMoveDest.x, this.commandMoveDest.y);
+        ctx.stroke();
+      }
+
+      ctx.restore();
     }
 
     // 调用原有的渲染
@@ -699,7 +703,7 @@ export class Unit extends EntityBasic {
     // drawImage(img, x, y, width, height) -> 这里指定宽和高，浏览器会自动缩放
     ctx.drawImage(sprite, this.x - offset, this.y - offset, drawWidth, drawHeight);
   }
-  
+
   _update_effect() {
     this.effect_list.forEach((effect) => {
       effect.update();

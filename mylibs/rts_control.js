@@ -1,5 +1,5 @@
 import { unit_distance, point_distance } from "./utils.js";
-
+import { scatter_range } from "./config.js";
 class RTSControl {
   constructor() {
     this.selectedUnits = [];
@@ -185,8 +185,8 @@ class RTSControl {
           let offsetX = 0;
           let offsetY = 0;
           if (count > 1) {
-            offsetX = (Math.random() - 0.5) * count * 2;
-            offsetY = (Math.random() - 0.5) * count * 2;
+            offsetX = (Math.random() - 0.5) * scatter_range;
+            offsetY = (Math.random() - 0.5) * scatter_range;
           }
           u.commandMove(wx + offsetX, wy + offsetY);
         }
