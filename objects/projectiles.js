@@ -531,6 +531,10 @@ export class BulletFactory {
     });
     b.pierce = 0;
     b.name = "SubsonicBullet";
+    b.onHit_ApplyEffect = function (target) {
+      CanvasCircle.explosion(this.x, this.y, 4, "green");
+      target.add_effect(DOT.poisoning(target, this.source_weapon));
+    };
     return b;
   }
 }
