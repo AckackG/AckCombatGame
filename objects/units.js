@@ -519,7 +519,7 @@ export class Unit extends EntityBasic {
     // 绘制选中光环
     if (this.isSelected) {
       ctx.save();
-      ctx.strokeStyle = "#0f0";
+      ctx.strokeStyle = "rgba(9, 181, 9, 1)";
       ctx.lineWidth = 2;
       ctx.beginPath();
       // 画一个椭圆或者圆在脚下
@@ -539,7 +539,7 @@ export class Unit extends EntityBasic {
 
       // 如果有移动指令，画一条线到目标点
       if (this.commandMoveDest) {
-        ctx.strokeStyle = "rgba(0, 255, 0, 0.5)";
+        ctx.strokeStyle = "rgba(17, 182, 17, 0.5)";
         ctx.setLineDash([2, 2]);
         ctx.lineWidth = 1;
         ctx.beginPath();
@@ -556,6 +556,24 @@ export class Unit extends EntityBasic {
 
     //Show HP
     this.#render_hpbar(ctx);
+
+    // I关闭状态指示 (内切正方形) ---
+    // 仅在手动模式下绘制
+    if (this.isManualMode()) {
+      ctx.save();
+      ctx.strokeStyle = "rgba(0, 255, 255, 0.6)"; // 青色，代表"指令接收中"
+      ctx.lineWidth = 1;
+
+      // 计算内切正方形的半边长 (r / √2)
+      // Math.SQRT1_2 是 1/√2 的常量，约等于 0.707，乘法比除法快
+      const offset = this.size * Math.SQRT1_2;
+      const side = offset * 2;
+
+      // 绘制正方形
+      ctx.strokeRect(this.x - offset, this.y - offset, side, side);
+
+      ctx.restore();
+    }
 
     //Show GunDirection
     this.#render_gun(ctx);
