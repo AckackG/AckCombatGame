@@ -173,13 +173,13 @@ export class DOT extends Effect {
     // 7. 重新计算当前帧的伤害
     this._update_damage();
 
-    console.log(
-      `DOT merged: ${this.name} | Fixed potential: ${total_fixed_potential.toFixed(
-        1
-      )} | New DPS: ${this.total_dps.toFixed(1)} (${this.damage_per_second.toFixed(1)} + ${(
-        this.damagePercent_per_second * 100
-      ).toFixed(1)}%)`
-    );
+    // console.log(
+    //   `DOT merged: ${this.name} | Fixed potential: ${total_fixed_potential.toFixed(
+    //     1
+    //   )} | New DPS: ${this.total_dps.toFixed(1)} (${this.damage_per_second.toFixed(1)} + ${(
+    //     this.damagePercent_per_second * 100
+    //   ).toFixed(1)}%)`
+    // );
   }
 
   _update_slow() {

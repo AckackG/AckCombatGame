@@ -109,6 +109,8 @@ class World {
   /** @type {CanvasRenderingContext2D} */
   ctx = this.canvas.getContext("2d");
 
+  render_callbacks = [];
+
   // 初始化视口
   viewport = new Viewport(this.canvas);
 
@@ -308,6 +310,10 @@ class World {
       render_canvas_end - render_canvas_start,
       this.CanvasPrompts.length
     );
+
+    // 执行外部注册的渲染回调 (比如 RTS选框) ===
+    // 必须在 viewport.restore 之前调用，这样选框才会跟随地图移动
+    this.render_callbacks.forEach((cb) => cb(this.ctx));
 
     // 恢复 Context (虽然下一帧会重置，但保持好习惯)
     this.viewport.restore(this.ctx);
