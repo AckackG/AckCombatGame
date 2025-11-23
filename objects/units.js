@@ -42,6 +42,8 @@ export class Unit extends EntityBasic {
 
   threat = 0; // 开火就有threat
 
+  fixed_value = null; // 固定单位价值
+
   target = null; //攻击目标
   _is_rendergun = true;
 
@@ -95,6 +97,9 @@ export class Unit extends EntityBasic {
    * @returns {number} 计算得到的单位价格。
    */
   get value() {
+    if (this.fixed_value !== null) {
+      return this.fixed_value;
+    }
     const att_value =
       this.threat / 100 + this.weapon.stat_damage_total / 10 + this.weapon.stat_kills * 20;
     const unit_value = this.maxhp / 10 + this.speed * 10 + this.size * 5;
@@ -534,6 +539,28 @@ export class Unit extends EntityBasic {
 
   // --- 渲染更新 ---
   render(ctx) {
+    // 调用原有的渲染
+    this.#render_circle(ctx);
+
+    //Show HP
+    this.#render_hpbar(ctx);
+
+    //Show GunDirection
+    this.#render_gun(ctx);
+
+    // Show RTS Control
+    this.#render_RTSControl(ctx);
+
+    //Show weapon
+    let weapon_stat = this.weapon.get_mag_info();
+    ctx.fillStyle = "black";
+    ctx.fillText(weapon_stat, this.x - 25, this.y + 8 + this.size);
+
+    //show debug
+    this.#render_debuginfo(ctx);
+  }
+
+  #render_RTSControl(ctx) {
     // 绘制选中光环
     if (this.isSelected) {
       ctx.save();
@@ -569,12 +596,6 @@ export class Unit extends EntityBasic {
       ctx.restore();
     }
 
-    // 调用原有的渲染
-    this.#render_circle(ctx);
-
-    //Show HP
-    this.#render_hpbar(ctx);
-
     // I关闭状态指示 (内切正方形) ---
     // 仅在手动模式下绘制
     if (this.isManualMode()) {
@@ -592,17 +613,6 @@ export class Unit extends EntityBasic {
 
       ctx.restore();
     }
-
-    //Show GunDirection
-    this.#render_gun(ctx);
-
-    //Show weapon
-    let weapon_stat = this.weapon.get_mag_info();
-    ctx.fillStyle = "black";
-    ctx.fillText(weapon_stat, this.x - 25, this.y + 8 + this.size);
-
-    //show debug
-    this.#render_debuginfo(ctx);
   }
 
   #render_hpbar(ctx) {
@@ -628,7 +638,7 @@ export class Unit extends EntityBasic {
 
     // Draw the border of the HP bar
     ctx.lineWidth = 1;
-    ctx.strokeStyle = "black";
+    ctx.strokeStyle = this.can_preaim ? "gold" : "black"; // 预瞄精英单位金边
     ctx.strokeRect(barX, barY, barWidth, barHeight);
 
     // Show HP text
@@ -845,6 +855,10 @@ export class Fighter extends Unit {
       this.weapon.ReloadTime = Math.max(500, this.weapon.ReloadTime * 0.95); // 减少5%换弹时间
       this.weapon.recoil = Math.max(0.1, this.weapon.recoil * 0.9); // 减少10%后坐力
 
+      if (this.level > 6) {
+        this.can_preaim = true;
+      }
+
       // 视觉与听觉反馈
       soundManager.play("levelup", { position: { x: this.x, y: this.y } });
       world.CanvasPrompts.push(
@@ -1046,6 +1060,7 @@ export class Monster extends Unit {
 export class Dummy extends Unit {
   constructor({ x, y, weapon, size = 15, color = "red", speed = 3, maxhp = 10000 } = {}) {
     super({ x, y, size, color, speed, maxhp, weapon });
+    this.fixed_value = 5000; //假人固定价值，利于升级
   }
   update() {
     //不会动

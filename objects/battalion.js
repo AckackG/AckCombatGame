@@ -107,7 +107,7 @@ export class Battalion {
       x,
       y,
       color,
-      size: 10,
+      size: 9,
       speed: 5,
       maxhp: 2000,
       weapon: GunFactory.random_gun(0.25),
