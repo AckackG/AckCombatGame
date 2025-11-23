@@ -297,18 +297,23 @@ export class Bullet extends BulletBasic {
   }
 
   #render_bullet(ctx) {
-    const sprite = getCachedCircle(this.color, this.size);
+    // 策略分流
+    if (this.size < 2) {
+      // 极小物体：直接画方块，性能最强
+      ctx.fillStyle = this.color;
+      // 稍微画大一点点以补偿圆形面积，或者直接用 size
+      const s = this.size * 2;
+      ctx.fillRect(this.x - this.size, this.y - this.size, s, s);
+    } else {
+      // 较大物体（如火箭弹、榴弹）：使用缓存图片以保持圆形平滑
+      const sprite = getCachedCircle(this.color, this.size);
+      const drawWidth = sprite.width / spriteScale;
+      const drawHeight = sprite.height / spriteScale;
+      const offset = drawWidth / 2;
 
-    // 原始图片是放大了 spriteScale 倍的
-    // 所以我们在画的时候，要把宽高除以 spriteScale
-    const drawWidth = sprite.width / spriteScale;
-    const drawHeight = sprite.height / spriteScale;
-
-    const offset = drawWidth / 2;
-
-    // drawImage 支持 5 个参数或 9 个参数
-    // drawImage(img, x, y, width, height) -> 这里指定宽和高，浏览器会自动缩放
-    ctx.drawImage(sprite, this.x - offset, this.y - offset, drawWidth, drawHeight);
+      // 坐标取整，减少子像素渲染开销
+      ctx.drawImage(sprite, (this.x - offset) | 0, (this.y - offset) | 0, drawWidth, drawHeight);
+    }
   }
 
   #render_tracer(ctx) {

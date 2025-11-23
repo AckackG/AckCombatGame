@@ -3,10 +3,12 @@ const cache = {};
 
 // 设置一个全局的清晰度倍数，2 表示由 2x 的分辨率
 // 如果觉得 Zoom=5 时还是很糊，可以改成 3 或 4
-const CACHE_SCALE = 3.0;
+const CACHE_SCALE = 1.0;
 
 export function getCachedCircle(color, radius, borderColor = null) {
-  const key = `${color}-${radius}-${borderColor}`;
+  // 这样 11.123 和 11.156 都会变成 "11.1"，共用一个缓存
+  const safeRadius = radius.toFixed(1);
+  const key = `${color}-${safeRadius}-${borderColor}`;
 
   if (cache[key]) {
     return cache[key];
