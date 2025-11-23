@@ -457,7 +457,7 @@ export class BulletFactory {
 
   static Buckshot({ x, y, angle, source_unit, source_weapon }) {
     let sp = 24 + Math.random() * 2 - 1;
-    let range_limit = source_weapon.PreFireRange - 50; //霰弹枪只能射800距离
+    let range_limit = source_weapon.range * 3.5;
     let b = new Bullet({
       x,
       y,
@@ -476,7 +476,7 @@ export class BulletFactory {
 
   static DragonBreath({ x, y, angle, source_unit, source_weapon }) {
     let sp = 20 + Math.random() * 4;
-    let range_limit = source_weapon.PreFireRange - 50; //DragonBreath只能射650距离
+    let range_limit = source_weapon.range * 3.5;
     let b = new Bullet({
       x,
       y,
