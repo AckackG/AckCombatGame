@@ -486,18 +486,6 @@ function register_debugunit() {
 
 // 随机摆放单位，用于测试战斗
 function register_combattest() {
-  btn_testEnemy.addEventListener("click", () => {
-    if (game.money >= 100) {
-      const enemy = Monster.spawn_normal(
-        world.pos_range.width / 2 + (Math.random() - 0.5) * 50,
-        world.pos_range.height / 2 + (Math.random() - 0.5) * 50,
-        1
-      );
-      world.units.push(enemy);
-      game.money -= 100;
-    }
-  });
-
   // 摆放多个随机步兵单位
   btn_testUnits.addEventListener("click", () => {
     let num = 10;
