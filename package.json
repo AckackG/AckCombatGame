@@ -1,0 +1,28 @@
+{
+  "name": "ackcombatgame",
+  "version": "1.0.0",
+  "description": "一款基于 HTML5 Canvas 的 2D 战术射击/塔防游戏。赛博朋克风格 UI，使用原生 JavaScript ES Modules 构建。",
+  "main": "index.js",
+  "directories": {
+    "doc": "doc"
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AckackG/AckCombatGame.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "bugs": {
+    "url": "https://github.com/AckackG/AckCombatGame/issues"
+  },
+  "homepage": "https://github.com/AckackG/AckCombatGame#readme",
+  "devDependencies": {
+    "jsdom": "^29.1.1",
+    "vitest": "^4.1.9"
+  }
+}
