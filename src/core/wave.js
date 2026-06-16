@@ -123,16 +123,25 @@ class WaveManager {
   #get_pools() {
     // 随波次增加变种生成的权重
     const wave_bonus = this.waveNumber * 2;
-    const spawnerWeight = this.waveNumber >= 3 ? 15 + wave_bonus : 0;
+    
+    // 限制变异怪物的最大权重不超过初始权重的 2 倍
+    const explosiveWeight = Math.min(15 + wave_bonus, 30); // 初始15，最大30
+    const rangedWeight = Math.min(30 + wave_bonus, 60);    // 初始30，最大60
+    
+    // 母体怪第三波才开始出现，初始15
+    const spawnerBase = this.waveNumber >= 3 ? 15 : 0;
+    const spawnerWeight = spawnerBase > 0 ? Math.min(15 + (this.waveNumber - 3) * 2, 30) : 0;
+
+    console.log(`[Wave ${this.waveNumber}] 怪物权重分配: Fast(自爆:${explosiveWeight}), Normal(远程:${rangedWeight}), Big(母体:${spawnerWeight})`);
 
     return {
       fast: [
         { type: Monster, weight: 80 },
-        { type: ExplosiveMonster, weight: 15 + wave_bonus }
+        { type: ExplosiveMonster, weight: explosiveWeight }
       ],
       normal: [
         { type: Monster, weight: 70 },
-        { type: RangedMonster, weight: 30 + wave_bonus }
+        { type: RangedMonster, weight: rangedWeight }
       ],
       big: [
         { type: Monster, weight: 85 },

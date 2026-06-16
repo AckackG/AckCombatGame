@@ -1158,10 +1158,10 @@ export class ExplosiveMonster extends Monster {
     return true; // Not dead
   }
 
-  static spawn_normal(x, y, monster_mul) {
+  static spawn_fast(x, y, monster_mul) {
     monster_mul = monster_mul ?? Math.random() + 0.75;
     return new this({
-      x, y, speed: 3.0, size: 7, maxhp: 150, monster_mul
+      x, y, speed: 4.0, size: 6, maxhp: 120, monster_mul
     });
   }
 }
@@ -1189,10 +1189,10 @@ export class SpawnerMonster extends Monster {
     }
   }
 
-  static spawn_normal(x, y, monster_mul) {
+  static spawn_big(x, y, monster_mul) {
     monster_mul = monster_mul ?? Math.random() + 0.75;
     return new this({
-      x, y, speed: 1.5, size: 12, maxhp: 500, monster_mul
+      x, y, speed: 0.5, size: 13, maxhp: 700, monster_mul
     });
   }
 }
