@@ -3,6 +3,7 @@ import { Fighter, Unit, Turret, Monster, Dummy } from "../entities/units.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
 import { game, world } from "./game.js";
 import { Battalion } from "../entities/battalion.js";
+import { waveManager } from "./wave.js";
 import { scatter_range } from "./config.js";
 
 const ctx = world.ctx;
@@ -84,7 +85,20 @@ function startGame(mode) {
   // 根据模式调整UI
   toggleCampaignUI(mode === "CAMPAIGN");
 
-  game.start_game();
+  if (mode === "CAMPAIGN") {
+    if (waveManager.loadGame()) {
+      game.start_game(); // Initialize game loop without clearing everything
+      // Note: loadGame cleared and setup units, but start_game() overwrites them
+      // Actually we must run start_game first, THEN load
+      game.start_game();
+      waveManager.loadGame();
+    } else {
+      game.start_game();
+      waveManager.start();
+    }
+  } else {
+    game.start_game();
+  }
 }
 
 btn_sandbox.addEventListener("click", () => startGame("SANDBOX"));
@@ -93,8 +107,18 @@ btn_campaign.addEventListener("click", () => startGame("CAMPAIGN"));
 
 // 重启游戏按钮注册
 btn_StartGame.addEventListener("click", () => {
-  placing.reset_units_btn();
-  game.start_game();
+  if (game.currentMode === "CAMPAIGN") {
+    if (!confirm("确定要重置战役吗？这将删除当前进度！")) {
+      return;
+    }
+    waveManager.clearSave();
+    placing.reset_units_btn();
+    game.start_game();
+    waveManager.start();
+  } else {
+    placing.reset_units_btn();
+    game.start_game();
+  }
 
   // 重置游戏时自动取消暂停;
   game.paused = false;

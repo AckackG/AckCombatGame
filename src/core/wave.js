@@ -1,4 +1,4 @@
-import { Monster, Unit, Base } from "../entities/units.js";
+import { Monster, Unit, Base, Fighter, Turret } from "../entities/units.js";
 import { Battalion } from "../entities/battalion.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { GunFactory } from "./weapons.js";
@@ -213,6 +213,7 @@ class WaveManager {
 
   spawnWave() {
     this.waveNumber++;
+    this.saveGame();
 
     const playerStrength = this._calculatePlayerStrength();
     let baseCount = 5 + this.waveNumber * 2;
@@ -228,6 +229,93 @@ class WaveManager {
       this.#spawn_enemy_soldiers(spawn_count);
       this.spawnType = "monster";
     }
+  }
+
+  saveGame() {
+    if (this.game.currentMode !== "CAMPAIGN") return;
+    const saveData = {
+      waveNumber: this.waveNumber,
+      money: this.game.money,
+      playerUnits: this.world.units
+        .filter(u => u.color === this.game.player_color && !u.dead)
+        .map(u => ({
+          className: u.constructor.name,
+          x: u.x,
+          y: u.y,
+          hp: u.hp,
+          maxhp: u.maxhp,
+          weapon_name: u.weapon ? u.weapon.wname : null,
+        }))
+    };
+    localStorage.setItem("campaign_save", JSON.stringify(saveData));
+  }
+
+  loadGame() {
+    const saveStr = localStorage.getItem("campaign_save");
+    if (!saveStr) return false;
+    try {
+      const saveData = JSON.parse(saveStr);
+      if (!saveData.waveNumber) return false;
+
+      this.game.currentMode = "CAMPAIGN";
+      this.waveNumber = saveData.waveNumber;
+      this.game.money = saveData.money;
+      this.timeToNextWave = 10000;
+      this.spawnType = "monster";
+      this.hasEnemies = false;
+
+      this.world.units.length = 0;
+      this.world.bullets.length = 0;
+
+      let hasBase = false;
+      saveData.playerUnits.forEach(uData => {
+        const weapon = uData.weapon_name ? GunFactory.get_gun(uData.weapon_name) : null;
+        let unitObj;
+        const params = {
+          x: uData.x,
+          y: uData.y,
+          color: this.game.player_color,
+          maxhp: uData.maxhp,
+          weapon: weapon
+        };
+        
+        if (uData.className === "Base") {
+          unitObj = new Base({...params, size: 40});
+          this.playerBase = unitObj;
+          hasBase = true;
+        } else if (uData.className === "Fighter") {
+          unitObj = new Fighter(params);
+        } else if (uData.className === "Turret") {
+          unitObj = new Turret(params);
+        } else {
+          unitObj = new Unit(params);
+        }
+        
+        if (uData.hp !== undefined) unitObj.hp = uData.hp;
+        this.world.units.push(unitObj);
+      });
+
+      if (!hasBase) {
+        // Fallback base
+        this.playerBase = new Base({
+          x: this.world.pos_range.width / 5,
+          y: this.world.pos_range.height / 3,
+          color: this.game.player_color,
+          size: 40,
+          hp: 20000,
+        });
+        this.world.units.push(this.playerBase);
+      }
+
+      return true;
+    } catch (e) {
+      console.error("Save load failed", e);
+      return false;
+    }
+  }
+
+  clearSave() {
+    localStorage.removeItem("campaign_save");
   }
 }
 

@@ -22,12 +22,6 @@ game.update_callbacks.push(waveManager.update.bind(waveManager));
 rtsControl.init(game, world);
 world.render_callbacks.push(rtsControl.render.bind(rtsControl));
 
-// 重置游戏，重启战役
-const btnStartCampaign = document.getElementById("button1");
-btnStartCampaign.addEventListener("click", () => {
-  // game.start_game();
-  waveManager.start(); // 在游戏开始时，手动启动波次管理器
-});
-
+// 重置游戏和战役逻辑已移至 btn_event.js
 // ---------------- 初始化 ----------------
 soundManager.preload();
