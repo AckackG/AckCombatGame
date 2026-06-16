@@ -558,37 +558,28 @@ function register_combattest() {
     let num = 10;
     let width = world.pos_range.width;
     let height = world.pos_range.height;
+    
+    // 在沙盒测试时模拟一个较高的波次（如 10），以便充分测试变异怪物
+    const pools = waveManager.get_pools(10);
 
     //地图右侧疯狗
     for (let i = 0; i < num * 1.5; i++) {
-      let { x, y } = world.randomPoint({
-        width,
-        height,
-        position: "right",
-        narrow: true,
-      });
-      world.units.push(Monster.spawn_fast(x, y));
+      let { x, y } = world.randomPoint({ width, height, position: "right", narrow: true });
+      const EnemyType = waveManager.pick_from_pool(pools.fast);
+      world.units.push(EnemyType.spawn_fast(x, y));
     }
     //地图上侧普通单位
     for (let i = 0; i < num; i++) {
-      let { x, y } = world.randomPoint({
-        width,
-        height,
-        position: "right",
-        narrow: true,
-      });
-      world.units.push(Monster.spawn_normal(x, y));
+      let { x, y } = world.randomPoint({ width, height, position: "right", narrow: true });
+      const EnemyType = waveManager.pick_from_pool(pools.normal);
+      world.units.push(EnemyType.spawn_normal(x, y));
     }
 
     //地图下册肉盾
     for (let i = 0; i < num; i++) {
-      let { x, y } = world.randomPoint({
-        width,
-        height,
-        position: "right",
-        narrow: true,
-      });
-      world.units.push(Monster.spawn_big(x, y));
+      let { x, y } = world.randomPoint({ width, height, position: "right", narrow: true });
+      const EnemyType = waveManager.pick_from_pool(pools.big);
+      world.units.push(EnemyType.spawn_big(x, y));
     }
   });
 }

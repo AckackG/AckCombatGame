@@ -120,19 +120,19 @@ class WaveManager {
   }
 
   // 获取三种类型怪物的权重池
-  #get_pools() {
+  get_pools(waveNumber = this.waveNumber) {
     // 随波次增加变种生成的权重
-    const wave_bonus = this.waveNumber * 2;
+    const wave_bonus = waveNumber * 2;
     
     // 限制变异怪物的最大权重不超过初始权重的 2 倍
     const explosiveWeight = Math.min(15 + wave_bonus, 30); // 初始15，最大30
     const rangedWeight = Math.min(30 + wave_bonus, 60);    // 初始30，最大60
     
     // 母体怪第三波才开始出现，初始15
-    const spawnerBase = this.waveNumber >= 3 ? 15 : 0;
-    const spawnerWeight = spawnerBase > 0 ? Math.min(15 + (this.waveNumber - 3) * 2, 30) : 0;
+    const spawnerBase = waveNumber >= 3 ? 15 : 0;
+    const spawnerWeight = spawnerBase > 0 ? Math.min(15 + (waveNumber - 3) * 2, 30) : 0;
 
-    console.log(`[Wave ${this.waveNumber}] 怪物权重分配: Fast(自爆:${explosiveWeight}), Normal(远程:${rangedWeight}), Big(母体:${spawnerWeight})`);
+    console.log(`[Wave ${waveNumber}] 怪物权重分配: Fast(自爆:${explosiveWeight}), Normal(远程:${rangedWeight}), Big(母体:${spawnerWeight})`);
 
     return {
       fast: [
@@ -151,7 +151,7 @@ class WaveManager {
   }
 
   // 根据权重池抽取怪物类型
-  #pick_from_pool(pool) {
+  pick_from_pool(pool) {
     const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
     let r = Math.random() * totalWeight;
     for (let item of pool) {
@@ -167,26 +167,26 @@ class WaveManager {
     let width = this.world.pos_range.width;
     let height = this.world.pos_range.height;
     
-    const pools = this.#get_pools();
+    const pools = this.get_pools();
 
     // 地图右侧疯狗 (Fast)
     for (let i = 0; i < num * 1.5; i++) {
       let { x, y } = this.world.randomPoint({ width, height, position: "right", narrow: true });
-      const EnemyType = this.#pick_from_pool(pools.fast);
+      const EnemyType = this.pick_from_pool(pools.fast);
       this.world.units.push(EnemyType.spawn_fast(x, y, intensity));
     }
 
     // 地图右侧普通单位 (Normal)
     for (let i = 0; i < num; i++) {
       let { x, y } = this.world.randomPoint({ width, height, position: "right", narrow: true });
-      const EnemyType = this.#pick_from_pool(pools.normal);
+      const EnemyType = this.pick_from_pool(pools.normal);
       this.world.units.push(EnemyType.spawn_normal(x, y, intensity));
     }
 
     // 地图右侧肉盾 (Big)
     for (let i = 0; i < num * 0.75; i++) {
       let { x, y } = this.world.randomPoint({ width, height, position: "right", narrow: true });
-      const EnemyType = this.#pick_from_pool(pools.big);
+      const EnemyType = this.pick_from_pool(pools.big);
       this.world.units.push(EnemyType.spawn_big(x, y, intensity));
     }
   }
