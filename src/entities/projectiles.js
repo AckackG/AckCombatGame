@@ -603,7 +603,6 @@ export class BulletFactory {
       behaviors: [PoisonOnHitBehavior()]
     });
     b.pierce = 0;
-    b.color = "rgb(120, 200, 50)"; // 毒液颜色
     b.name = "MonsterSpit";
     return b;
   }
