@@ -488,7 +488,7 @@ function register_debugunit() {
 function register_combattest() {
   btn_testEnemy.addEventListener("click", () => {
     if (game.money >= 100) {
-      const enemy = ExplosiveMonster.spawn_normal(
+      const enemy = Monster.spawn_normal(
         world.pos_range.width / 2 + (Math.random() - 0.5) * 50,
         world.pos_range.height / 2 + (Math.random() - 0.5) * 50,
         1
