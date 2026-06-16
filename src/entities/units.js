@@ -1083,6 +1083,120 @@ export class Dummy extends Unit {
   }
 }
 
+export class RangedMonster extends Monster {
+  constructor(params = {}) {
+    if (!params.weapon) {
+      params.weapon = GunFactory.get_gun("Monster_Spit");
+      params.weapon.damage *= params.monster_mul || 1;
+    }
+    super(params);
+    this.color = "rgb(120, 200, 50)"; // Greenish
+    this.symbol = "triangle";
+  }
+
+  _move() {
+    if (!this.target) return;
+    
+    // Call stickiness check
+    if (game.time_now % 3 === 0) {
+      const dx = this.x - this.last_position.x;
+      const dy = this.y - this.last_position.y;
+      if (dx * dx + dy * dy < this.min_move_threshold) {
+        this.stuck_counter++;
+      } else {
+        this.stuck_counter = 0;
+      }
+      this.last_position.x = this.x;
+      this.last_position.y = this.y;
+    }
+    if (this.stuck_counter > 10) {
+      this.random_offset_angle = (Math.random() - 0.5) * Math.PI;
+      this.stuck_counter = 0;
+    }
+
+    const dist = unit_distance(this, this.target);
+    // 只在距离大于射程的 80% 时移动靠近
+    if (dist > this.weapon.range * 0.8) {
+      const base_angle = unit_angle(this, this.target);
+      const actual_angle = base_angle + this.random_offset_angle;
+      this.moveTowards(actual_angle);
+      this.random_offset_angle *= 0.95;
+    }
+  }
+
+  static spawn_normal(x, y, monster_mul) {
+    monster_mul = monster_mul ?? Math.random() + 0.75;
+    return new this({
+      x, y, speed: 2.0, size: 8, maxhp: 200, monster_mul
+    });
+  }
+}
+
+export class ExplosiveMonster extends Monster {
+  constructor(params = {}) {
+    params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 15 });
+    super(params);
+    this.color = "rgb(255, 100, 0)"; 
+    this.symbol = "x";
+    this.split_on_death = params.split_on_death ?? (Math.random() > 0.5); // 随机决定是自爆还是分裂
+  }
+
+  _update_hp() {
+    if (this.hp <= 0 && !this.dead) {
+      this.dead = true;
+      if (this.split_on_death) {
+         const m1 = Monster.spawn_fast(this.x + 15, this.y + 15, (this.monster_mul || 1) * 0.6);
+         const m2 = Monster.spawn_fast(this.x - 15, this.y - 15, (this.monster_mul || 1) * 0.6);
+         game.world.units.push(m1, m2);
+      } else {
+         const explode_gun = GunFactory.get_gun("Monster_Explosion");
+         explode_gun.damage *= (this.monster_mul || 1);
+         explode_gun.attack(this, {x: this.x, y: this.y, dead: false});
+      }
+      return false; // return false for dead
+    }
+    return true; // Not dead
+  }
+
+  static spawn_normal(x, y, monster_mul) {
+    monster_mul = monster_mul ?? Math.random() + 0.75;
+    return new this({
+      x, y, speed: 3.0, size: 7, maxhp: 150, monster_mul
+    });
+  }
+}
+
+export class SpawnerMonster extends Monster {
+  constructor(params = {}) {
+    params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 30 });
+    super(params);
+    this.color = "rgb(150, 0, 150)";
+    this.symbol = "double_circle";
+    this.spawn_timer = 0;
+  }
+
+  update() {
+    super.update();
+    this.spawn_timer += (1000 / game.targetFPS);
+    
+    // 如果有接敌，4秒；否则10秒
+    const interval = this.target ? 4000 : 10000;
+    
+    if (this.spawn_timer >= interval) {
+      this.spawn_timer = 0;
+      const m = Monster.spawn_fast(this.x + (Math.random()-0.5)*30, this.y + (Math.random()-0.5)*30, (this.monster_mul || 1) * 0.5);
+      game.world.units.push(m);
+    }
+  }
+
+  static spawn_normal(x, y, monster_mul) {
+    monster_mul = monster_mul ?? Math.random() + 0.75;
+    return new this({
+      x, y, speed: 1.5, size: 12, maxhp: 500, monster_mul
+    });
+  }
+}
+
 export class Base extends Unit {
   constructor({
     x,
