@@ -3,6 +3,7 @@ import { CanvasTextPrompt, CanvasCircle } from "../core/CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "../core/logic.js";
 import { DOT } from "../core/effects.js";
 import { BulletBasic, EntityBasic } from "./obj_basic.js";
+import { ExplodeBehavior, BurnOnHitBehavior, PoisonOnHitBehavior } from "./bullet_behaviors.js";
 import { game, world } from "../core/game.js";
 import { getCachedCircle, spriteScale } from "../core/SpriteCache.js";
 import {
@@ -58,9 +59,9 @@ export class Bullet extends BulletBasic {
     acceleration = 0,
     ax = 0,
     ay = 0,
-    exploding = false,
     threat_level = 1,
     tracer_count = null,
+    behaviors = null,
   } = {}) {
     super({ x, y, speed });
 
@@ -103,25 +104,24 @@ export class Bullet extends BulletBasic {
 
     this.DeadTimeStamp = game.time_now + this.lifetime;
 
-    //爆炸相关
-    this.exploding = exploding;
-    this.exploding_ff = true; //友军伤害
-    this.exploding_radius = 20; //爆炸半径
-    this.exploding_damage = 100; //爆炸伤害
-    this.exploding_minimum_percent = 0.5; //爆炸边缘伤害百分比
-
-    // 碰撞检测相关
-    if (this.exploding) {
-      this.width = this.exploding_radius * 2.1;
-      this.height = this.exploding_radius * 2.1;
-    } else {
-      this.width = size * 2.1;
-      this.height = size * 2.1;
-    }
+    // 碰撞检测体积
+    this.width = size * 2.1;
+    this.height = size * 2.1;
 
     //子弹发射时增加单位威胁值
     this.threat_level = threat_level;
     this.source_unit.threat += this.damage * this.threat_level;
+
+    // 行为组件 (Behaviors)
+    this.behaviors = [];
+    if (behaviors) {
+      behaviors.forEach(b => this.addBehavior(b));
+    }
+  }
+
+  addBehavior(behavior) {
+    this.behaviors.push(behavior);
+    if (behavior.onInit) behavior.onInit(this);
   }
 
   get dead() {
@@ -138,56 +138,22 @@ export class Bullet extends BulletBasic {
   }
 
   /**
-   * 计算爆炸伤害的最终值。
-   * 根据爆炸物与目标的距离，计算出伤害百分比，然后乘以爆炸伤害的基数，得出最终伤害值。
-   *
-   * @param {number} distance 爆炸物与目标之间的距离。
-   * @returns {number} 返回计算出的最终爆炸伤害值。
-   */
-  #explosion_dmg_final(distance) {
-    const damage_percent =
-      this.exploding_minimum_percent +
-      (1 - this.exploding_minimum_percent) * (1 - distance / this.exploding_radius);
-    return this.exploding_damage * damage_percent;
-  }
-
-  _explode() {
-    //选取单位造成伤害
-    let units = world.UnitsQT.retrieve(this);
-    units.forEach((unit) => {
-      //(友伤关闭的敌军单位 || 友伤开启的全部单位)
-      if ((unit.color !== this.color && !this.exploding_ff) || this.exploding_ff) {
-        let dis = unit_distance(unit, this) - unit.size;
-        if (dis <= this.exploding_radius && !unit.dead) {
-          let dmg = this.#explosion_dmg_final(dis);
-          this.onHit(unit, dmg, "explosive");
-          //爆炸额外增加单位威胁值
-          this.source_unit.threat += dmg * this.threat_level;
-        }
-      }
-    });
-
-    //添加爆炸特效
-    CanvasCircle.explosion(this.x, this.y, this.exploding_radius, this.color, 2000);
-  }
-
-  /**
    * 对象第一次 dead=true 时触发的逻辑。
    *
-   * @function _ondeath
+   * @function _on_death
    * @private
    */
   _on_death() {
-    if (this.exploding) {
-      this._explode();
-    }
+    this.behaviors.forEach(b => b.onDeath?.(this));
   }
 
   /**
    * 处理命中效果的函数
    * @param {Object} target - 被命中的目标对象
    */
-  onHit_ApplyEffect(target) {}
+  onHit_ApplyEffect(target) {
+    this.behaviors.forEach(b => b.onHit?.(this, target));
+  }
 
   /**
    * 检查对象是否位于地图边界内。
@@ -218,6 +184,7 @@ export class Bullet extends BulletBasic {
   _move() {
     this.#move_UpdateVector();
     this.moveForward();
+    this.behaviors.forEach(b => b.onUpdate?.(this));
     this.#is_InMap();
   }
 
@@ -488,14 +455,11 @@ export class BulletFactory {
       speed: sp, //DragonBreath速度随机变化
       size: 0.9,
       lifetime: (range_limit / 24) * (1000 / game.targetFPS),
+      behaviors: [BurnOnHitBehavior()]
     });
     b.pierce = 0;
     b.name = "DragonBreath";
     b.EndLife_warning = false;
-    b.onHit_ApplyEffect = function (target) {
-      CanvasCircle.explosion(this.x, this.y, 6, "red");
-      target.add_effect(DOT.burning(target, this.source_weapon));
-    };
     return b;
   }
 
@@ -528,20 +492,18 @@ export class BulletFactory {
       source_weapon,
       speed,
       size: 4,
-      exploding: true,
       // 动态计算 lifetime: (距离/速度) * 每帧时间(ms)
       lifetime: (dist / speed) * (1000 / game.targetFPS),
+      behaviors: [ExplodeBehavior(75, 75, true)] // 伤害75, 范围75, 开启友伤
     });
+    // 强制放大碰撞体积充当近炸引信
+    b.width = 75 * 2.1;
+    b.height = 75 * 2.1;
     b.pierce = 0;
     b.name = "Grenade";
     b.EndLife_warning = false;
     b.damage_text_always = false; //卡顿
     b.damage_text_affix = "💥";
-
-    b.exploding_damage = 75;
-    b.exploding_ff = true;
-    b.exploding_minimum_percent = 0.3;
-    b.exploding_radius = 75;
     return b;
   }
 
@@ -579,20 +541,18 @@ export class BulletFactory {
       source_weapon,
       speed,
       size: 5,
-      exploding: true,
       acceleration,
       lifetime: lifetime,
+      behaviors: [ExplodeBehavior(300, 150, true)] // 伤害300, 范围150, 开启友伤
     });
+    // 强制放大碰撞体积充当近炸引信
+    b.width = 150 * 2.1;
+    b.height = 150 * 2.1;
     b.pierce = 0;
     b.name = "Rocket";
     b.EndLife_warning = false;
     b.damage_text_always = false;
     b.damage_text_affix = "💥";
-
-    b.exploding_damage = 300;
-    b.exploding_ff = true;
-    b.exploding_minimum_percent = 0.4;
-    b.exploding_radius = 150;
     return b;
   }
 
@@ -623,13 +583,10 @@ export class BulletFactory {
       speed: 25,
       size: 0.95,
       threat_level: 0.15,
+      behaviors: [PoisonOnHitBehavior()]
     });
     b.pierce = 0;
     b.name = "SubsonicBullet";
-    b.onHit_ApplyEffect = function (target) {
-      CanvasCircle.explosion(this.x, this.y, 4, "green");
-      target.add_effect(DOT.poisoning(target, this.source_weapon));
-    };
     return b;
   }
 }
