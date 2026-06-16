@@ -468,35 +468,47 @@ class Game {
   }
 
   #render_GUI_DebugInfo() {
-    if (!this.is_DebugMode() || !this.is_quarter_second()) return;
-    //快速信息，每帧更新
+    if (!this.is_DebugMode()) {
+      if (this.info_debug.innerHTML !== "") {
+        this.info_debug.innerHTML = "";
+      }
+      return;
+    }
+
+    // 渲染在 Canvas 上，取代原本的 DOM appendChild (消除 Reflow 性能瓶颈)
+    const ctx = this.world.ctx;
+    ctx.save();
+    // 使用固定的屏幕坐标进行绘制
+    ctx.setTransform(1, 0, 0, 1, 0, 0); 
+    
+    ctx.fillStyle = "black";
+    ctx.font = "14px monospace";
+    ctx.textAlign = "left";
+    ctx.textBaseline = "top";
+    
+    let startY = 150; // 从屏幕上方留出空间给其他UI
+    const lineH = 16;
+    
     const bullets_count = this.world.bullets.length;
+    ctx.fillText(`BulletBasic counts: ${bullets_count}`, 10, startY);
+    startY += lineH;
 
-    const container = this.info_debug;
-    container.innerHTML = ""; // 清空子元素
-
-    //添加bullet信息
-    const bullet_div = document.createElement("div");
-    bullet_div.textContent = `BulletBasic counts:${bullets_count}`;
-    container.appendChild(bullet_div);
-
-    // 添加unit div到容器中
-    this.world.units.map((unit) => {
-      // 创建div元素
-      const unit_div = document.createElement("div");
-      const text = `${Math.round(unit.x)},${Math.round(unit.y)} |threat: ${unit.threat.toFixed(
-        1
-      )} | value: ${unit.value.toFixed(1)} | damage_dealt ${unit.weapon.stat_damage_total.toFixed(
-        1
-      )} |Target dead?: ${unit.target ? unit.target.dead : null} | Dead?: ${
-        unit ? unit.dead : null
-      }`;
-
-      unit_div.textContent = text; // 设置按钮文本
-      unit_div.style.color = unit.color;
-
-      container.appendChild(unit_div);
+    this.world.units.forEach((unit) => {
+      const targetDead = unit.target ? unit.target.dead : "null";
+      const dmg = unit.weapon && unit.weapon.stat_damage_total ? unit.weapon.stat_damage_total : 0;
+      const text = `${Math.round(unit.x)},${Math.round(unit.y)} | threat: ${unit.threat.toFixed(1)} | value: ${unit.value.toFixed(1)} | dmg: ${dmg.toFixed(1)} | Target dead?: ${targetDead} | Dead?: ${unit.dead}`;
+      
+      ctx.fillStyle = unit.color || "black";
+      ctx.fillText(text, 10, startY);
+      startY += lineH;
     });
+    
+    ctx.restore();
+    
+    // 清空旧 DOM 元素，防止双重显示
+    if (this.info_debug.innerHTML !== "") {
+      this.info_debug.innerHTML = "";
+    }
   }
 
   #render_GUI() {
@@ -523,8 +535,8 @@ class Game {
   }
 
   #render() {
-    this.#render_GUI();
     this.#render_canvas();
+    this.#render_GUI(); // GUI (如 Canvas 上的 debuginfo) 需要画在最上层
   }
 
   _gameloop = () => {
