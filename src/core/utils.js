@@ -269,3 +269,54 @@ export function get_intercept_position(shooter, target, v_bullet) {
     y: target.y + vy * t,
   };
 }
+
+/**
+ * 对象池 (Object Pool)
+ * 用于复用高频创建/销毁的对象，避免垃圾回收 (GC) 导致的卡顿。
+ */
+export class ObjectPool {
+  constructor(factoryFunc, initialSize = 100) {
+    this.factoryFunc = factoryFunc;
+    this.pool = [];
+    for (let i = 0; i < initialSize; i++) {
+      this.pool.push(this.factoryFunc());
+    }
+  }
+
+  get() {
+    if (this.pool.length > 0) {
+      return this.pool.pop();
+    }
+    return this.factoryFunc();
+  }
+
+  release(obj) {
+    this.pool.push(obj);
+  }
+}
+
+/**
+ * 遍历数组，删除死掉的实体。使用 Swap-and-Pop 方式，O(1) 删除复杂度。
+ * 直接在原数组上操作，避免 filter 创建新数组的内存开销。
+ * @param {Array} arr 包含对象的数组
+ * @param {ObjectPool} [pool=null] 可选的对象池，如果有则把死掉的对象放回池子
+ */
+export function cleanDeadEntities(arr, pool = null) {
+  let i = 0;
+  while (i < arr.length) {
+    if (arr[i].dead) {
+      if (pool) {
+        pool.release(arr[i]);
+      }
+      // 将当前元素与最后一个元素交换
+      const last = arr.length - 1;
+      if (i !== last) {
+        arr[i] = arr[last];
+      }
+      arr.pop(); // 移除最后的元素
+      // 不要 i++，因为交换过来的新元素也需要检查
+    } else {
+      i++;
+    }
+  }
+}

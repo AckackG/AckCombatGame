@@ -1,5 +1,5 @@
 import { targetFPS, MapSize } from "./config.js";
-import { fpsqueue as fps_queue, Weaponstat } from "./utils.js";
+import { fpsqueue as fps_queue, Weaponstat, cleanDeadEntities } from "./utils.js";
 import { EntityBasic, BulletBasic } from "../entities/obj_basic.js";
 import Guns_Data from "../data/weapons_data.js";
 import { Quadtree } from "./quadtree.js";
@@ -267,8 +267,8 @@ class World {
     performanceCounter.recordCollisions(collisions_end - collisions_start);
 
     //剔除死亡单位 / 子弹
-    this.units = this.units.filter((x) => !x.dead);
-    this.bullets = this.bullets.filter((x) => !x.dead);
+    cleanDeadEntities(this.units);
+    cleanDeadEntities(this.bullets);
   }
 
   /**
@@ -354,7 +354,7 @@ class World {
     this.viewport.restore(this.ctx);
 
     //剔除过期 prompt
-    this.CanvasPrompts = this.CanvasPrompts.filter((x) => !x.dead);
+    cleanDeadEntities(this.CanvasPrompts);
   }
 }
 
