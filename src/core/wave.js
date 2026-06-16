@@ -119,52 +119,66 @@ class WaveManager {
       .reduce((sum, u) => sum + (u.value ?? 0), 0);
   }
 
+  // 获取三种类型怪物的权重池
+  #get_pools() {
+    // 随波次增加变种生成的权重
+    const wave_bonus = this.waveNumber * 2;
+    const spawnerWeight = this.waveNumber >= 3 ? 15 + wave_bonus : 0;
+
+    return {
+      fast: [
+        { type: Monster, weight: 80 },
+        { type: ExplosiveMonster, weight: 15 + wave_bonus }
+      ],
+      normal: [
+        { type: Monster, weight: 70 },
+        { type: RangedMonster, weight: 30 + wave_bonus }
+      ],
+      big: [
+        { type: Monster, weight: 85 },
+        { type: SpawnerMonster, weight: spawnerWeight }
+      ]
+    };
+  }
+
+  // 根据权重池抽取怪物类型
+  #pick_from_pool(pool) {
+    const totalWeight = pool.reduce((sum, item) => sum + item.weight, 0);
+    let r = Math.random() * totalWeight;
+    for (let item of pool) {
+      if (r < item.weight) return item.type;
+      r -= item.weight;
+    }
+    return pool[pool.length - 1].type;
+  }
+
   #spawn_monsters(count) {
     const intensity = 1 + this.waveNumber * 0.1;
     let num = count / 1.75 + 1;
     let width = this.world.pos_range.width;
     let height = this.world.pos_range.height;
+    
+    const pools = this.#get_pools();
 
-    // 地图右侧疯狗
+    // 地图右侧疯狗 (Fast)
     for (let i = 0; i < num * 1.5; i++) {
-      let { x, y } = this.world.randomPoint({
-        width,
-        height,
-        position: "right",
-        narrow: true,
-      });
-      this.world.units.push(Monster.spawn_fast(x, y, intensity));
+      let { x, y } = this.world.randomPoint({ width, height, position: "right", narrow: true });
+      const EnemyType = this.#pick_from_pool(pools.fast);
+      this.world.units.push(EnemyType.spawn_fast(x, y, intensity));
     }
 
-    // 地图右侧普通单位
+    // 地图右侧普通单位 (Normal)
     for (let i = 0; i < num; i++) {
-      let { x, y } = this.world.randomPoint({
-        width,
-        height,
-        position: "right",
-        narrow: true,
-      });
-      let r = Math.random();
-      if (r < 0.2) {
-        this.world.units.push(RangedMonster.spawn_normal(x, y, intensity));
-      } else if (r < 0.35) {
-        this.world.units.push(ExplosiveMonster.spawn_normal(x, y, intensity));
-      } else if (r < 0.45 && this.waveNumber >= 3) {
-        this.world.units.push(SpawnerMonster.spawn_normal(x, y, intensity));
-      } else {
-        this.world.units.push(Monster.spawn_normal(x, y, intensity));
-      }
+      let { x, y } = this.world.randomPoint({ width, height, position: "right", narrow: true });
+      const EnemyType = this.#pick_from_pool(pools.normal);
+      this.world.units.push(EnemyType.spawn_normal(x, y, intensity));
     }
 
-    // 地图右侧肉盾
+    // 地图右侧肉盾 (Big)
     for (let i = 0; i < num * 0.75; i++) {
-      let { x, y } = this.world.randomPoint({
-        width,
-        height,
-        position: "right",
-        narrow: true,
-      });
-      this.world.units.push(Monster.spawn_big(x, y, intensity));
+      let { x, y } = this.world.randomPoint({ width, height, position: "right", narrow: true });
+      const EnemyType = this.#pick_from_pool(pools.big);
+      this.world.units.push(EnemyType.spawn_big(x, y, intensity));
     }
   }
 
