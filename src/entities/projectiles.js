@@ -589,4 +589,22 @@ export class BulletFactory {
     b.name = "SubsonicBullet";
     return b;
   }
+
+  static MonsterSpit({ x, y, angle, source_unit, source_weapon }) {
+    let b = new Bullet({
+      x,
+      y,
+      angle,
+      source_unit,
+      source_weapon,
+      speed: 15,
+      size: 10,
+      threat_level: 1.0,
+      behaviors: [PoisonOnHitBehavior()]
+    });
+    b.pierce = 0;
+    b.color = "rgb(120, 200, 50)"; // 毒液颜色
+    b.name = "MonsterSpit";
+    return b;
+  }
 }

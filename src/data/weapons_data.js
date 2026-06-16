@@ -187,7 +187,7 @@ export default {
     range: 400,
     Range_Max: 600,
     ReloadTime: 0,
-    projectile: "SubsonicBullet",
+    projectile: "MonsterSpit",
     special: true,
   },
   Monster_Explosion: {
