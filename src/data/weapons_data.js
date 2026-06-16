@@ -176,4 +176,31 @@ export default {
     projectile: "Rocket",
     soundType: "rpg",
   },
+  Monster_Spit: {
+    wname: "Monster_Spit",
+    desc: "远程怪物的毒液喷吐",
+    magsize: 999,
+    burst: 1,
+    rpm: 45,
+    damage: 20,
+    recoil: 8,
+    range: 400,
+    Range_Max: 600,
+    ReloadTime: 0,
+    projectile: "SubsonicBullet",
+    special: true,
+  },
+  Monster_Explosion: {
+    wname: "Monster_Explosion",
+    desc: "自爆怪的爆炸伤害",
+    magsize: 1,
+    burst: 1,
+    rpm: 60,
+    damage: 150,
+    recoil: 0,
+    range: 150,
+    ReloadTime: 99999,
+    projectile: "Grenade", // Use explosive projectile logic
+    special: true,
+  }
 };

@@ -747,7 +747,7 @@ export class Unit extends EntityBasic {
   }
 
   #render_circle(ctx) {
-    const sprite = getCachedCircle(this.color, this.size, this.border_color);
+    const sprite = getCachedCircle(this.color, this.size, this.border_color, this.symbol);
 
     // 原始图片是放大了 spriteScale 倍的
     // 所以我们在画的时候，要把宽高除以 spriteScale

@@ -1,4 +1,4 @@
-import { Monster, Unit, Base, Fighter, Turret } from "../entities/units.js";
+import { Monster, Unit, Base, Fighter, Turret, RangedMonster, ExplosiveMonster, SpawnerMonster } from "../entities/units.js";
 import { Battalion } from "../entities/battalion.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { GunFactory } from "./weapons.js";
@@ -144,7 +144,16 @@ class WaveManager {
         position: "right",
         narrow: true,
       });
-      this.world.units.push(Monster.spawn_normal(x, y, intensity));
+      let r = Math.random();
+      if (r < 0.2) {
+        this.world.units.push(RangedMonster.spawn_normal(x, y, intensity));
+      } else if (r < 0.35) {
+        this.world.units.push(ExplosiveMonster.spawn_normal(x, y, intensity));
+      } else if (r < 0.45 && this.waveNumber >= 3) {
+        this.world.units.push(SpawnerMonster.spawn_normal(x, y, intensity));
+      } else {
+        this.world.units.push(Monster.spawn_normal(x, y, intensity));
+      }
     }
 
     // 地图右侧肉盾

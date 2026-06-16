@@ -1,5 +1,5 @@
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
-import { Fighter, Unit, Turret, Monster, Dummy } from "../entities/units.js";
+import { Fighter, Unit, Turret, Monster, Dummy, ExplosiveMonster } from "../entities/units.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
 import { game, world } from "./game.js";
 import { Battalion } from "../entities/battalion.js";
@@ -486,6 +486,18 @@ function register_debugunit() {
 
 // 随机摆放单位，用于测试战斗
 function register_combattest() {
+  btn_testEnemy.addEventListener("click", () => {
+    if (game.money >= 100) {
+      const enemy = ExplosiveMonster.spawn_normal(
+        world.pos_range.width / 2 + (Math.random() - 0.5) * 50,
+        world.pos_range.height / 2 + (Math.random() - 0.5) * 50,
+        1
+      );
+      world.units.push(enemy);
+      game.money -= 100;
+    }
+  });
+
   // 摆放多个随机步兵单位
   btn_testUnits.addEventListener("click", () => {
     let num = 10;

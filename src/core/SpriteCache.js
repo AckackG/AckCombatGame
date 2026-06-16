@@ -5,10 +5,10 @@ const cache = {};
 // 如果觉得 Zoom=5 时还是很糊，可以改成 3 或 4
 const CACHE_SCALE = 1.0;
 
-export function getCachedCircle(color, radius, borderColor = null) {
+export function getCachedCircle(color, radius, borderColor = null, symbol = null) {
   // 这样 11.123 和 11.156 都会变成 "11.1"，共用一个缓存
   const safeRadius = radius.toFixed(1);
-  const key = `${color}-${safeRadius}-${borderColor}`;
+  const key = `${color}-${safeRadius}-${borderColor}-${symbol}`;
 
   if (cache[key]) {
     return cache[key];
@@ -38,6 +38,32 @@ export function getCachedCircle(color, radius, borderColor = null) {
     ctx.strokeStyle = borderColor;
     ctx.lineWidth = 1 * CACHE_SCALE; // 线宽也要对应放大，否则放大后线太细
     ctx.stroke();
+  }
+
+  // --- 绘制特殊符号 ---
+  if (symbol) {
+    ctx.strokeStyle = "rgba(0, 0, 0, 0.6)";
+    ctx.lineWidth = 1.5 * CACHE_SCALE;
+    
+    if (symbol === "triangle") {
+      ctx.beginPath();
+      ctx.moveTo(center, center - drawRadius * 0.4);
+      ctx.lineTo(center - drawRadius * 0.4, center + drawRadius * 0.3);
+      ctx.lineTo(center + drawRadius * 0.4, center + drawRadius * 0.3);
+      ctx.closePath();
+      ctx.stroke();
+    } else if (symbol === "x") {
+      ctx.beginPath();
+      ctx.moveTo(center - drawRadius * 0.4, center - drawRadius * 0.4);
+      ctx.lineTo(center + drawRadius * 0.4, center + drawRadius * 0.4);
+      ctx.moveTo(center + drawRadius * 0.4, center - drawRadius * 0.4);
+      ctx.lineTo(center - drawRadius * 0.4, center + drawRadius * 0.4);
+      ctx.stroke();
+    } else if (symbol === "double_circle") {
+      ctx.beginPath();
+      ctx.arc(center, center, drawRadius * 0.5, 0, Math.PI * 2);
+      ctx.stroke();
+    }
   }
   // --- 关键修改结束 ---
 
