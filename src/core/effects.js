@@ -186,6 +186,7 @@ export class DOT extends Effect {
     if (this.total_dps) {
       deal_damage({
         damage: this.total_dps,
+        damage_type: "true_damage",
         target: this.unit,
         source_weapon: this.source_weapon,
       });
@@ -197,6 +198,7 @@ export class DOT extends Effect {
     if (this.total_dpf) {
       deal_damage({
         damage: this.total_dpf,
+        damage_type: "true_damage",
         target: this.unit,
         source_weapon: this.source_weapon,
       });

@@ -15,13 +15,42 @@ import soundManager from "./sound_manager.js";
  */
 export function deal_damage({
   damage = 0,
+  damage_type = "kinetic", // "kinetic", "explosive", "energy", "true_damage"
   target,
   source_weapon = null,
   source_unit = null,
   source_bullet = null,
 } = {}) {
-  //造成伤害
-  target.hp -= damage;
+  if (!target || target.dead) return;
+
+  // 1. 闪避判定 (Evasion)
+  // true_damage 和 explosive 通常不可闪避
+  if (damage_type !== "true_damage" && damage_type !== "explosive") {
+    if (target.evasion > 0 && Math.random() < target.evasion) {
+      world.CanvasPrompts.push(
+        new CanvasTextPrompt({
+          text: "MISS",
+          unit: target,
+          color: "gray",
+          size: 10,
+          lifetime: 800,
+          vy: -1,
+        })
+      );
+      return; // 闪避成功，免疫此次伤害
+    }
+  }
+
+  // 2. 护甲与减伤计算 (Armor & Damage Reduction)
+  let actual_damage = damage;
+  if (damage_type !== "true_damage" && target.armor > 0) {
+    // 护甲减伤公式：减免比例 = armor / (armor + 100)
+    const reduction = target.armor / (target.armor + 100);
+    actual_damage = actual_damage * (1 - reduction);
+  }
+
+  // 3. 造成伤害
+  target.hp -= actual_damage;
 
   //如果有来源武器，则更新武器统计数据
   if (source_weapon) {

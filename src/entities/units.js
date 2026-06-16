@@ -58,6 +58,9 @@ export class Unit extends EntityBasic {
     this.width = size * 2.2;
     this.height = size * 2.2;
 
+    this.armor = 0; // 护甲值，用于减免伤害
+    this.evasion = 0; // 闪避率 (0.0 - 1.0)
+
     this.weapon = weapon;
     this.combat_threat_range = weapon.range * this.combat_threat_range_mul;
     soundManager.play("spawn", { position: { x: this.x, y: this.y } });

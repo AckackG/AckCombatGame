@@ -160,7 +160,7 @@ export class Bullet extends BulletBasic {
         let dis = unit_distance(unit, this) - unit.size;
         if (dis <= this.exploding_radius && !unit.dead) {
           let dmg = this.#explosion_dmg_final(dis);
-          this.onHit(unit, dmg);
+          this.onHit(unit, dmg, "explosive");
           //爆炸额外增加单位威胁值
           this.source_unit.threat += dmg * this.threat_level;
         }
@@ -237,8 +237,9 @@ export class Bullet extends BulletBasic {
    * 此函数负责在击中目标后执行一系列的后续动作，包括计算伤害、应用效果和更新子弹状态。
    * @param {Object} target - 被击中的目标对象。
    * @param {number} [damage] - 伤害值。如果不传，则自动计算当前衰减后的伤害。
+   * @param {string} [damage_type] - 伤害类型，默认为 "kinetic"
    */
-  onHit(target, damage) {
+  onHit(target, damage, damage_type = "kinetic") {
     // 如果没有传入具体伤害值(子弹碰撞伤害)，则计算衰减后的伤害
     // 注意：这里 damage 如果是 undefined 则计算，如果是 0 则使用 0
     const is_auto_calc = damage === undefined;
@@ -254,7 +255,7 @@ export class Bullet extends BulletBasic {
           `| Dmg: ${this.damage} -> ${final_damage.toFixed(1)} (${percent}%)`
       );
     }
-    this._onHit_damage(target, final_damage);
+    this._onHit_damage(target, final_damage, damage_type);
     this.onHit_ApplyEffect(target); //空函数，自定义效果
     this._onHit_UpdateBullet(target);
   }
@@ -323,7 +324,7 @@ export class Bullet extends BulletBasic {
    * @param {Object} target - 受伤的目标对象，必须提供。
    * @param {number} damage - 伤害值，可选，默认为 this.damage，表示子弹伤害
    */
-  _onHit_damage(target, damage) {
+  _onHit_damage(target, damage, damage_type = "kinetic") {
     if (!target) {
       console.error("Invalid target provided to damage_target.");
       return;
@@ -331,6 +332,7 @@ export class Bullet extends BulletBasic {
     //造成伤害
     deal_damage({
       damage,
+      damage_type,
       target,
       source_bullet: this,
       source_unit: this.source_unit,
