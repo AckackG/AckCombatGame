@@ -1002,7 +1002,10 @@ export class Monster extends Unit {
    * 避免近战单位追逐过远的目标
    */
   _slow_ReTarget() {
-    if (this.target && unit_distance(this, this.target) > this.weapon.range * 3) {
+    // 【目标粘性 (Target Stickiness)】
+    // 将丢失目标的距离阈值从 range*3 大幅提高到 range*20。
+    // 避免玩家通过多单位交替拉近距离，导致怪物频繁切换目标而在原地"跳舞"（被风筝）。
+    if (this.target && unit_distance(this, this.target) > this.weapon.range * 20) {
       this._find_target(5);
     }
   }

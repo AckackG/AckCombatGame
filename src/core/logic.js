@@ -52,6 +52,15 @@ export function deal_damage({
   // 3. 造成伤害
   target.hp -= actual_damage;
 
+  // 4. 目标粘性与仇恨响应 (Target Agro)
+  // 如果受击者是 Monster 且攻击者存在，有概率被激怒并转移仇恨到攻击者身上，避免玩家单方面安全风筝
+  if (source_unit && target.constructor.name === "Monster") {
+    // 如果当前没有目标，或者 30% 概率转移仇恨（增加不可预测性和粘性）
+    if (!target.target || Math.random() < 0.3) {
+      target.target = source_unit;
+    }
+  }
+
   //如果有来源武器，则更新武器统计数据
   if (source_weapon) {
     source_weapon.stat_damage_total += damage;
