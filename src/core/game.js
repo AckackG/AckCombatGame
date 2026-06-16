@@ -566,6 +566,7 @@ class Game {
     this.isGameOver = false;
 
     performanceCounter.reset();
+    this.weapon_stats.clear();
 
     if (this.#GameLoopID) {
       cancelAnimationFrame(this.#GameLoopID);

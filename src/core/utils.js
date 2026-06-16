@@ -77,6 +77,10 @@ class WeaponStat {
 
     return r;
   }
+
+  clear() {
+    this.weapons.clear();
+  }
 }
 
 export let Weaponstat = new WeaponStat();

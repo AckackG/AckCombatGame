@@ -236,6 +236,7 @@ class WaveManager {
     const saveData = {
       waveNumber: this.waveNumber,
       money: this.game.money,
+      weapon_stats: Array.from(this.game.weapon_stats.weapons.entries()),
       playerUnits: this.world.units
         .filter(u => u.color === this.game.player_color && !u.dead)
         .map(u => ({
@@ -263,6 +264,10 @@ class WaveManager {
       this.timeToNextWave = 10000;
       this.spawnType = "monster";
       this.hasEnemies = false;
+
+      if (saveData.weapon_stats) {
+        this.game.weapon_stats.weapons = new Map(saveData.weapon_stats);
+      }
 
       this.world.units.length = 0;
       this.world.bullets.length = 0;

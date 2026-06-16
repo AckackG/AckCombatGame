@@ -156,6 +156,69 @@ btn_showdebug.addEventListener("click", () => {
   console.table(game.weapon_stats.get_report());
 });
 
+// 新增：战斗数据统计面板
+const btn_show_stats = document.getElementById("btn-show-stats");
+const stats_container = document.getElementById("stats-container");
+const btn_stats_back = document.getElementById("btn-stats-back");
+const stats_content = document.getElementById("stats-content");
+let was_paused_before_stats = false;
+
+btn_show_stats.addEventListener("click", () => {
+  was_paused_before_stats = game.paused;
+  game.paused = true;
+  stats_container.style.display = "flex";
+
+  const report = game.weapon_stats.get_report();
+  
+  if (report.length === 0) {
+    stats_content.innerHTML = "<div style='color: #888; text-align: center; grid-column: 1 / -1;'>NO COMBAT DATA AVAILABLE</div>";
+    return;
+  }
+
+  // 按照实战 DPS 降序排序
+  report.sort((a, b) => b.dps_finnal - a.dps_finnal);
+
+  let html = "";
+  report.forEach(stat => {
+    // 处理 NaN 等异常情况
+    const hitRate = isNaN(stat.accurate) ? 0 : (stat.accurate * 100);
+    const dmgEfficiency = isNaN(stat.dmg_efficiency) ? 0 : (stat.dmg_efficiency * 100);
+
+    html += `
+      <div class="weapon-card" style="display: flex; flex-direction: column; gap: 5px;">
+        <div class="w-header" style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px;">
+          <div class="w-name" style="color: #00ffcc; font-size: 16px;">${stat.name.replace(/_/g, " ")}</div>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+          <span style="color:#aaa">SHOTS</span>
+          <span>${stat.shots_hit} / ${stat.shots_fired} (<span style="color:#ffcc00">${hitRate.toFixed(1)}%</span>)</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px;">
+          <span style="color:#aaa">DAMAGE</span>
+          <span>${stat.damage_hit.toFixed(0)} / ${stat.damage_fired.toFixed(0)} (<span style="color:#ffcc00">${dmgEfficiency.toFixed(1)}%</span>)</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 13px; margin-top: 5px; border-top: 1px dashed #444; padding-top: 5px;">
+          <span style="color:#aaa">AVG DPS</span>
+          <span style="color: grey">${stat.dps_average.toFixed(1)}</span>
+        </div>
+        <div style="display: flex; justify-content: space-between; font-size: 14px; font-weight: bold;">
+          <span style="color:#aaa">REAL DPS</span>
+          <span style="color: #ff3366">${stat.dps_finnal.toFixed(1)}</span>
+        </div>
+      </div>
+    `;
+  });
+
+  stats_content.innerHTML = html;
+});
+
+btn_stats_back.addEventListener("click", () => {
+  stats_container.style.display = "none";
+  if (!was_paused_before_stats) {
+    game.paused = false;
+  }
+});
+
 function drop_unit(x, y) {
   //金钱检测
   if (placing.placing_cost > game.money) {
