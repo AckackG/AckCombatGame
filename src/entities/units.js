@@ -1090,7 +1090,6 @@ export class RangedMonster extends Monster {
       params.weapon.damage *= params.monster_mul || 1;
     }
     super(params);
-    this.color = "rgb(120, 200, 50)"; // Greenish
     this.symbol = "triangle";
   }
 
@@ -1136,7 +1135,6 @@ export class ExplosiveMonster extends Monster {
   constructor(params = {}) {
     params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 15 });
     super(params);
-    this.color = "rgb(255, 100, 0)"; 
     this.symbol = "x";
     this.split_on_death = params.split_on_death ?? (Math.random() > 0.5); // 随机决定是自爆还是分裂
   }
@@ -1170,7 +1168,6 @@ export class SpawnerMonster extends Monster {
   constructor(params = {}) {
     params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 30 });
     super(params);
-    this.color = "rgb(150, 0, 150)";
     this.symbol = "double_circle";
     this.spawn_timer = 0;
   }
