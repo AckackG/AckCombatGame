@@ -1,5 +1,5 @@
-import { Monster, Unit, Base } from "../objects/units.js";
-import { Battalion } from "../objects/battalion.js";
+import { Monster, Unit, Base } from "../entities/units.js";
+import { Battalion } from "../entities/battalion.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { GunFactory } from "./weapons.js";
 

@@ -1,4 +1,4 @@
-import { point_angle } from "../mylibs/utils.js";
+import { point_angle } from "../core/utils.js";
 
 class MoveableObject {
   angle = 0; //当前朝向

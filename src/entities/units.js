@@ -1,12 +1,12 @@
-import { unit_distance, unit_angle, isBulletIntersect } from "../mylibs/utils.js";
-import { CanvasTextPrompt } from "../mylibs/CanvasTextPrompt.js";
-import { DOT } from "../mylibs/effects.js";
-import { GunFactory, MeleeWeapon } from "../mylibs/weapons.js";
+import { unit_distance, unit_angle, isBulletIntersect } from "../core/utils.js";
+import { CanvasTextPrompt } from "../core/CanvasTextPrompt.js";
+import { DOT } from "../core/effects.js";
+import { GunFactory, MeleeWeapon } from "../core/weapons.js";
 import { EntityBasic } from "./obj_basic.js";
-import { game, world } from "../mylibs/game.js";
-import soundManager from "../mylibs/sound_manager.js";
-import { getCachedCircle, spriteScale } from "../mylibs/SpriteCache.js";
-import { ManualControlTime } from "../mylibs/config.js";
+import { game, world } from "../core/game.js";
+import soundManager from "../core/sound_manager.js";
+import { getCachedCircle, spriteScale } from "../core/SpriteCache.js";
+import { ManualControlTime } from "../core/config.js";
 
 const pos_range = world.pos_range;
 

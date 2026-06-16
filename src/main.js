@@ -1,15 +1,15 @@
 // import "./style.css"; //webpack打包时去掉注释
 
-import { game, world } from "./mylibs/game.js";
-import { waveManager } from "./mylibs/wave.js";
-import { rtsControl } from "./mylibs/rts_control.js";
+import { game, world } from "./core/game.js";
+import { waveManager } from "./core/wave.js";
+import { rtsControl } from "./core/rts_control.js";
 
-import "./objects/projectiles.js";
-import "./mylibs/weapons.js";
-import "./objects/units.js";
-import "./mylibs/btn_event.js";
-import "./mylibs/database.js";
-import soundManager from "./mylibs/sound_manager.js";
+import "./entities/projectiles.js";
+import "./core/weapons.js";
+import "./entities/units.js";
+import "./core/btn_event.js";
+import "./core/database.js";
+import soundManager from "./core/sound_manager.js";
 
 // ---------------- 模块组装 ----------------
 // 通过依赖注入，将 game 和 world 实例传入 waveManager，打破循环依赖

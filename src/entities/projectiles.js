@@ -1,15 +1,15 @@
-import { getRandomSign, unit_distance, point_distance } from "../mylibs/utils.js";
-import { CanvasTextPrompt, CanvasCircle } from "../mylibs/CanvasTextPrompt.js";
-import { deal_damage, target_killed } from "../mylibs/logic.js";
-import { DOT } from "../mylibs/effects.js";
+import { getRandomSign, unit_distance, point_distance } from "../core/utils.js";
+import { CanvasTextPrompt, CanvasCircle } from "../core/CanvasTextPrompt.js";
+import { deal_damage, target_killed } from "../core/logic.js";
+import { DOT } from "../core/effects.js";
 import { BulletBasic, EntityBasic } from "./obj_basic.js";
-import { game, world } from "../mylibs/game.js";
-import { getCachedCircle, spriteScale } from "../mylibs/SpriteCache.js";
+import { game, world } from "../core/game.js";
+import { getCachedCircle, spriteScale } from "../core/SpriteCache.js";
 import {
   DefaultAttenuationRangeMul,
   DefaultMaxRangeMul,
   MaxBulletDamageDropPer,
-} from "../mylibs/config.js";
+} from "../core/config.js";
 
 const pos_range = world.pos_range;
 

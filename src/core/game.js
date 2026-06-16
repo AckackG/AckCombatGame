@@ -1,6 +1,6 @@
 import { targetFPS, MapSize } from "./config.js";
 import { fpsqueue as fps_queue, Weaponstat } from "./utils.js";
-import { EntityBasic, BulletBasic } from "../objects/obj_basic.js";
+import { EntityBasic, BulletBasic } from "../entities/obj_basic.js";
 import Guns_Data from "../data/weapons_data.js";
 import { Quadtree } from "./quadtree.js";
 import { performanceCounter } from "./performance_counter.js";

@@ -1,4 +1,4 @@
-import { BulletFactory } from "../objects/projectiles.js";
+import { BulletFactory } from "../entities/projectiles.js";
 import { unit_distance, get_intercept_position } from "./utils.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "./logic.js";

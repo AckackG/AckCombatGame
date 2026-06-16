@@ -1,8 +1,8 @@
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
-import { Fighter, Unit, Turret, Monster, Dummy } from "../objects/units.js";
+import { Fighter, Unit, Turret, Monster, Dummy } from "../entities/units.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
 import { game, world } from "./game.js";
-import { Battalion } from "../objects/battalion.js";
+import { Battalion } from "../entities/battalion.js";
 import { scatter_range } from "./config.js";
 
 const ctx = world.ctx;

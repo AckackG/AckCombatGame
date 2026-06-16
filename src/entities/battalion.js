@@ -1,5 +1,5 @@
 import { Unit, Fighter, Monster, Turret } from "./units.js";
-import { GunFactory, MeleeWeapon } from "../mylibs/weapons.js";
+import { GunFactory, MeleeWeapon } from "../core/weapons.js";
 
 export class Battalion {
   /**
