@@ -3,7 +3,13 @@ import { CanvasTextPrompt, CanvasCircle } from "../core/CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "../core/logic.js";
 import { DOT } from "../core/effects.js";
 import { BulletBasic, EntityBasic } from "./obj_basic.js";
-import { ExplodeBehavior, BurnOnHitBehavior, PoisonOnHitBehavior } from "./bullet_behaviors.js";
+import {
+  ExplodeBehavior,
+  BurnOnHitBehavior,
+  PoisonOnHitBehavior,
+  SlowOnHitBehavior,
+  HomingBehavior,
+} from "./bullet_behaviors.js";
 import { game, world } from "../core/game.js";
 import { getCachedCircle, spriteScale } from "../core/SpriteCache.js";
 import {
@@ -71,6 +77,7 @@ export class Bullet extends BulletBasic {
 
     //运动相关
     this.angle = angle;
+    this.acceleration = acceleration;
     this.dx = Math.cos(this.angle) * this.speed;
     this.dy = Math.sin(this.angle) * this.speed;
     if (ax || ay) {
@@ -494,11 +501,18 @@ export class BulletFactory {
       size: 4,
       // 动态计算 lifetime: (距离/速度) * 每帧时间(ms)
       lifetime: (dist / speed) * (1000 / game.targetFPS),
-      behaviors: [ExplodeBehavior(75, 75, true)] // 伤害75, 范围75, 开启友伤
+      behaviors: [
+        ExplodeBehavior(
+          source_weapon.explosion_damage ?? source_weapon.damage,
+          source_weapon.explosion_radius ?? 75,
+          true
+        )
+      ]
     });
     // 强制放大碰撞体积充当近炸引信
-    b.width = 75 * 2.1;
-    b.height = 75 * 2.1;
+    const explosion_radius = source_weapon.explosion_radius ?? 75;
+    b.width = explosion_radius * 2.1;
+    b.height = explosion_radius * 2.1;
     b.pierce = 0;
     b.name = "Grenade";
     b.EndLife_warning = false;
@@ -543,16 +557,89 @@ export class BulletFactory {
       size: 5,
       acceleration,
       lifetime: lifetime,
-      behaviors: [ExplodeBehavior(300, 150, true)] // 伤害300, 范围150, 开启友伤
+      behaviors: [
+        ExplodeBehavior(
+          source_weapon.explosion_damage ?? 300,
+          source_weapon.explosion_radius ?? 150,
+          true
+        )
+      ]
     });
     // 强制放大碰撞体积充当近炸引信
-    b.width = 150 * 2.1;
-    b.height = 150 * 2.1;
+    const explosion_radius = source_weapon.explosion_radius ?? 150;
+    b.width = explosion_radius * 2.1;
+    b.height = explosion_radius * 2.1;
     b.pierce = 0;
     b.name = "Rocket";
     b.EndLife_warning = false;
     b.damage_text_always = false;
     b.damage_text_affix = "💥";
+    return b;
+  }
+
+  static HomingRocket({ x, y, angle, source_unit, source_weapon, target_dist, target_unit }) {
+    let speed = 3;
+    let acceleration = 0.5;
+
+    const A = 0.5 * acceleration;
+    const B = speed;
+    const C = -target_dist;
+    const delta = B * B - 4 * A * C;
+    const t_frames = delta >= 0 ? (-B + Math.sqrt(delta)) / (2 * A) : target_dist / speed;
+    const lifetime = t_frames * (1000 / game.targetFPS);
+    const explosion_radius = source_weapon.explosion_radius ?? 150;
+
+    let b = new Bullet({
+      x,
+      y,
+      angle,
+      source_unit,
+      source_weapon,
+      speed,
+      size: 5,
+      acceleration,
+      lifetime,
+      behaviors: [
+        HomingBehavior(target_unit, source_weapon.homing_turn_deg_per_second ?? 5),
+        ExplodeBehavior(source_weapon.explosion_damage ?? 150, explosion_radius, true)
+      ]
+    });
+    b.width = explosion_radius * 2.1;
+    b.height = explosion_radius * 2.1;
+    b.pierce = 0;
+    b.name = "HomingRocket";
+    b.EndLife_warning = false;
+    b.damage_text_always = false;
+    b.damage_text_affix = "💥";
+    return b;
+  }
+
+  static CryoGrenade({ x, y, angle, source_unit, source_weapon, target_dist }) {
+    const dist = target_dist + (Math.random() - 0.5) * 60;
+    const speed = 15;
+    const explosion_radius = source_weapon.explosion_radius ?? 75;
+
+    let b = new Bullet({
+      x,
+      y,
+      angle,
+      source_unit,
+      source_weapon,
+      speed,
+      size: 4,
+      lifetime: (dist / speed) * (1000 / game.targetFPS),
+      behaviors: [
+        ExplodeBehavior(source_weapon.explosion_damage ?? source_weapon.damage, explosion_radius, false),
+        SlowOnHitBehavior()
+      ]
+    });
+    b.width = explosion_radius * 2.1;
+    b.height = explosion_radius * 2.1;
+    b.pierce = 0;
+    b.name = "CryoGrenade";
+    b.EndLife_warning = false;
+    b.damage_text_always = false;
+    b.damage_text_affix = "❄️";
     return b;
   }
 

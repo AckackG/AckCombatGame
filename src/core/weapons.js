@@ -1,5 +1,5 @@
 import { BulletFactory } from "../entities/projectiles.js";
-import { unit_distance, get_intercept_position } from "./utils.js";
+import { clamp, get_recoil_reference_row, unit_distance, get_intercept_position } from "./utils.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { deal_damage, target_killed } from "./logic.js";
 import { game, world } from "./game.js";
@@ -16,6 +16,8 @@ const PROJECTILE_SPEEDS = {
   High_Caliber: 50,
   Grenade: 15,
   Rocket: 15, // 火箭弹是加速的(3->?), 这里取一个经验平均值用于预判
+  HomingRocket: 15,
+  CryoGrenade: 15,
   MagneticAmmo: 120,
   SubsonicBullet: 25,
 };
@@ -68,6 +70,7 @@ class GunBasic {
     Range_Max = null,
     soundType = null,
     attenuation_factor = 1, // 默认为 1，开启衰减
+    use_fire_control = false,
   } = {}) {
     this.damage = damage; //子弹伤害
     this.burst = burst; //每轮射击几发（霰弹）
@@ -85,6 +88,10 @@ class GunBasic {
 
     this.wname = wname;
     this.attenuation_factor = attenuation_factor;
+    this.use_fire_control = use_fire_control;
+    this.recoil_heat = 0;
+    this.last_recoil_update_time = game.time_now;
+    this.fire_control_release_time = 0;
 
     this.rate = (1000 / (rpm / 60)) * (game.targetFPS / 60); //每次发射间隔 ms
     this.mag = magsize;
@@ -104,6 +111,74 @@ class GunBasic {
 
   get dps_average() {
     return this.mag_damage / ((this.magsize / this.rpm) * 60 + this.ReloadTime / 1000);
+  }
+
+  get current_recoil() {
+    return this.recoil / 2 + this.recoil_heat;
+  }
+
+  _get_recoil_pressure() {
+    return clamp((this.rpm * this.burst * Math.sqrt(this.damage / 25)) / 600, 0.6, 2.4);
+  }
+
+  _get_recoil_heat_per_projectile() {
+    return this.recoil * 0.025 * Math.sqrt(this.damage / 25);
+  }
+
+  _get_recoil_cooling_per_second() {
+    return (this.recoil * 1.25) / Math.sqrt(this._get_recoil_pressure());
+  }
+
+  _update_recoil_heat() {
+    const nowTime = game.time_now;
+    const deltaTime = Math.max(0, nowTime - this.last_recoil_update_time);
+    this.last_recoil_update_time = nowTime;
+
+    if (deltaTime <= 0 || this.recoil_heat <= 0) {
+      return;
+    }
+
+    const cooling = this._get_recoil_cooling_per_second() * (deltaTime / 1000);
+    this.recoil_heat = Math.max(0, this.recoil_heat - cooling);
+  }
+
+  _add_recoil_heat() {
+    this.recoil_heat = Math.min(
+      this.recoil * 2,
+      this.recoil_heat + this._get_recoil_heat_per_projectile()
+    );
+    this.last_recoil_update_time = game.time_now;
+  }
+
+  _is_fire_control_enabled(attacker) {
+    return Boolean(this.use_fire_control || attacker?.use_fire_control);
+  }
+
+  _should_hold_fire(attacker, target, target_distance) {
+    if (!this._is_fire_control_enabled(attacker)) {
+      return false;
+    }
+
+    const reference = attacker.target_recoil_reference;
+    if (!reference) {
+      return false;
+    }
+
+    const allowedRecoil = 4125.296125 * ((target.size || 9) / 9) / Math.max(target_distance, 1);
+    const allowedHeat = Math.max(0, allowedRecoil - this.recoil / 2);
+    const nowTime = game.time_now;
+
+    if (nowTime < this.fire_control_release_time) {
+      return this.recoil_heat > allowedHeat * 0.5;
+    }
+
+    const row = get_recoil_reference_row(reference, this.current_recoil);
+    if (row && target_distance > row.hit25) {
+      this.fire_control_release_time = nowTime + 250;
+      return true;
+    }
+
+    return false;
   }
 
   /**
@@ -200,6 +275,8 @@ class GunBasic {
    * @returns {number} 返回生成的子弹数量，如果未射击则返回0。
    */
   attack(attacker, target) {
+    this._update_recoil_heat();
+
     // 1. 装弹检查 (最快，优先)
     if (this.reloading) {
       if (game.time_now > this.reloading_endTime) {
@@ -231,7 +308,12 @@ class GunBasic {
 
     // 4. 距离检查 (Heavy Math: 开方运算)
     // 既然已经决定要开火了，现在才检查是否在射程内
-    if (unit_distance(attacker, target) > this.PreFireRange) {
+    const target_distance = unit_distance(attacker, target);
+    if (target_distance > this.PreFireRange) {
+      return;
+    }
+
+    if (this._should_hold_fire(attacker, target, target_distance)) {
       return;
     }
 
@@ -279,12 +361,13 @@ class GunBasic {
       let angle = Math.atan2(dy, dx);
       // 添加随机后坐力，使子弹有一定散射
       //recoil 从 degree 转成 rad
-      angle += (Math.random() - 0.5) * this.recoil * (Math.PI / 180);
+      angle += (Math.random() - 0.5) * this.current_recoil * (Math.PI / 180);
 
       //统计数据
       this.stat_bullets_fired += 1;
       this.stat_damage_estimate += this.damage;
       game.weapon_stats.weapon_fire(this, this.damage);
+      this._add_recoil_heat();
 
       // 创建新子弹实例，并指定其初始位置、角度和所属对象
 
@@ -295,6 +378,7 @@ class GunBasic {
           angle,
           source_unit,
           source_weapon: this,
+          target_unit: source_unit.target,
           target_dist, // 传入目标距离
         })
       );
@@ -477,8 +561,24 @@ export class GunFactory extends GunBasic {
     const gun_names =
       Math.random() < special_chance ? game.Guns_SpecialNames : game.Guns_NormalNames;
 
-    const random_name = gun_names[Math.floor(Math.random() * gun_names.length)];
+    const random_name = this.#pick_weighted_gun_name(gun_names);
     return new this(game.Guns_Data[random_name]);
+  }
+
+  static #pick_weighted_gun_name(gun_names) {
+    const total_weight = gun_names.reduce((sum, name) => {
+      return sum + (game.Guns_Data[name].random_weight ?? 1);
+    }, 0);
+    let random_weight = Math.random() * total_weight;
+
+    for (const name of gun_names) {
+      random_weight -= game.Guns_Data[name].random_weight ?? 1;
+      if (random_weight <= 0) {
+        return name;
+      }
+    }
+
+    return gun_names[gun_names.length - 1];
   }
   /**
    * 根据枪支名称静态获取枪支实例。

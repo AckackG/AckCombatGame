@@ -85,6 +85,41 @@ class WeaponStat {
 
 export let Weaponstat = new WeaponStat();
 
+export function clamp(value, min, max) {
+  return Math.min(Math.max(value, min), max);
+}
+
+const RECOIL_REFERENCE_SIZE = 9;
+const RECOIL_REFERENCE_BASE = {
+  hit100: 1031.324031,
+  hit80: 1289.155039,
+  hit50: 2062.648062,
+  hit25: 4125.296125,
+};
+
+export function generate_recoil_reference(target_size = RECOIL_REFERENCE_SIZE) {
+  const size_mul = target_size / RECOIL_REFERENCE_SIZE;
+  const reference = new Map();
+
+  for (let recoil_x10 = 1; recoil_x10 <= 200; recoil_x10++) {
+    const recoil = recoil_x10 / 10;
+    reference.set(recoil.toFixed(1), {
+      recoil,
+      hit100: (RECOIL_REFERENCE_BASE.hit100 * size_mul) / recoil,
+      hit80: (RECOIL_REFERENCE_BASE.hit80 * size_mul) / recoil,
+      hit50: (RECOIL_REFERENCE_BASE.hit50 * size_mul) / recoil,
+      hit25: (RECOIL_REFERENCE_BASE.hit25 * size_mul) / recoil,
+    });
+  }
+
+  return reference;
+}
+
+export function get_recoil_reference_row(reference, recoil) {
+  const key = clamp(Math.round(recoil * 10) / 10, 0.1, 20).toFixed(1);
+  return reference.get(key);
+}
+
 /**
  * 计算两个单位之间的欧几里得距离。
  *

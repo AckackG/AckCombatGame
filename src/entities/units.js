@@ -1,4 +1,10 @@
-import { unit_distance, unit_distance_sq, unit_angle, isBulletIntersect } from "../core/utils.js";
+import {
+  generate_recoil_reference,
+  unit_distance,
+  unit_distance_sq,
+  unit_angle,
+  isBulletIntersect,
+} from "../core/utils.js";
 import { CanvasTextPrompt } from "../core/CanvasTextPrompt.js";
 import { DOT } from "../core/effects.js";
 import { GunFactory, MeleeWeapon } from "../core/weapons.js";
@@ -23,6 +29,7 @@ export class Unit extends EntityBasic {
 
   effect_list = [];
   effect_map = new Map(); // 用于按类型索引DOT效果
+  movement_speed_multiplier = 1;
 
   dead = false;
 
@@ -41,6 +48,8 @@ export class Unit extends EntityBasic {
   combat_threat_range_mul = 3; //Threat寻敌在 3倍武器range 之内
 
   threat = 0; // 开火就有threat
+  use_fire_control = false;
+  target_recoil_reference = null;
 
   fixed_value = null; // 固定单位价值
   is_monster = false;
@@ -140,6 +149,7 @@ export class Unit extends EntityBasic {
 
   setTarget(target) {
     this.target = target;
+    this.target_recoil_reference = generate_recoil_reference(target.size);
     this.setMoveTarget(target.x, target.y);
   }
 
@@ -214,18 +224,22 @@ export class Unit extends EntityBasic {
    * @param {DOT} effect - 要添加的效果对象
    */
   add_effect(effect) {
-    // 如果不是DOT效果或没有name，直接添加
-    if (!(effect instanceof DOT) || !effect.name) {
+    // 如果没有name，直接添加
+    if (!effect.name) {
       this.effect_list.push(effect);
       return;
     }
 
-    // 检查是否已存在相同名称的DOT
-    const existingDOT = this.effect_map.get(effect.name);
+    // 检查是否已存在相同名称的效果
+    const existingEffect = this.effect_map.get(effect.name);
 
-    if (existingDOT && !existingDOT.dead) {
-      // 合并到现有的DOT
-      existingDOT.merge(effect);
+    if (existingEffect && !existingEffect.dead) {
+      // 合并或刷新到现有的效果
+      if (existingEffect instanceof DOT) {
+        existingEffect.merge(effect);
+      } else {
+        existingEffect.refresh(effect);
+      }
 
       // 显示合并提示
       // world.CanvasPrompts.push(
@@ -317,7 +331,9 @@ export class Unit extends EntityBasic {
         this.forcedTarget = null;
         this.target = null; // 清除 target 以便 _find_target 重新运行
       } else {
-        this.target = this.forcedTarget; // 锁定目标
+        if (this.target !== this.forcedTarget) {
+          this.setTarget(this.forcedTarget); // 锁定目标
+        }
       }
     }
 
@@ -762,13 +778,15 @@ export class Unit extends EntityBasic {
   }
 
   _update_effect() {
+    this.movement_speed_multiplier = 1;
+
     this.effect_list.forEach((effect) => {
       effect.update();
     });
 
     // 清理死亡的效果
     this.effect_list = this.effect_list.filter((effect) => {
-      if (effect.dead && effect instanceof DOT && effect.name) {
+      if (effect.dead && effect.name) {
         // 从映射中移除
         this.effect_map.delete(effect.name);
       }

@@ -1,7 +1,7 @@
-import { unit_distance } from "../core/utils.js";
-import { world } from "../core/game.js";
+import { clamp, point_angle, unit_distance } from "../core/utils.js";
+import { game, world } from "../core/game.js";
 import { CanvasCircle } from "../core/CanvasTextPrompt.js";
-import { DOT } from "../core/effects.js";
+import { DOT, SlowEffect } from "../core/effects.js";
 
 /**
  * 爆炸行为插件
@@ -54,6 +54,44 @@ export const PoisonOnHitBehavior = () => ({
     if (bullet.source_weapon) {
       CanvasCircle.explosion(bullet.x, bullet.y, 4, "green");
       target.add_effect(DOT.poisoning(target, bullet.source_weapon));
+    }
+  }
+});
+
+export const SlowOnHitBehavior = () => ({
+  onHit: (bullet, target) => {
+    if (bullet.source_weapon) {
+      CanvasCircle.explosion(bullet.x, bullet.y, 8, "cyan");
+      target.add_effect(SlowEffect.freezing(target, bullet.source_weapon));
+    }
+  }
+});
+
+export const HomingBehavior = (target_unit, turn_deg_per_second = 5) => ({
+  onInit: (bullet) => {
+    bullet.target_unit = target_unit;
+    bullet.homing_turn_rad_per_frame = (turn_deg_per_second * Math.PI) / 180 / game.targetFPS;
+  },
+  onUpdate: (bullet) => {
+    const target = bullet.target_unit;
+    if (!target || target.dead) {
+      return;
+    }
+
+    const desired_angle = point_angle(bullet.x, bullet.y, target.x, target.y);
+    let diff = desired_angle - bullet.angle;
+    diff = Math.atan2(Math.sin(diff), Math.cos(diff));
+
+    const turn = clamp(diff, -bullet.homing_turn_rad_per_frame, bullet.homing_turn_rad_per_frame);
+    bullet.angle += turn;
+
+    const current_speed = Math.hypot(bullet.dx, bullet.dy);
+    bullet.dx = Math.cos(bullet.angle) * current_speed;
+    bullet.dy = Math.sin(bullet.angle) * current_speed;
+
+    if (bullet.acceleration) {
+      bullet.ax = Math.cos(bullet.angle) * bullet.acceleration;
+      bullet.ay = Math.sin(bullet.angle) * bullet.acceleration;
     }
   }
 });

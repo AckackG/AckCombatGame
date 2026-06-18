@@ -21,6 +21,10 @@ class MoveableObject {
     this.dy = Math.sin(this.angle) * this.speed;
   }
 
+  get current_speed() {
+    return this.speed * (this.movement_speed_multiplier ?? 1);
+  }
+
   set x(value) {
     this._x = value;
   }
@@ -41,8 +45,9 @@ class MoveableObject {
   }
 
   _move_GetVector(angle) {
-    this.dx = Math.cos(angle) * this.speed;
-    this.dy = Math.sin(angle) * this.speed;
+    const current_speed = this.current_speed;
+    this.dx = Math.cos(angle) * current_speed;
+    this.dy = Math.sin(angle) * current_speed;
   }
 
   /**
@@ -82,7 +87,7 @@ class MoveableObject {
     let distance = Math.sqrt(dx * dx + dy * dy);
 
     // 如果已经到达目标点附近，则直接设置为目标点
-    if (distance < this.speed) {
+    if (distance < this.current_speed) {
       this.x = toX;
       this.y = toY;
       return;

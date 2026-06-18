@@ -2,8 +2,9 @@ import { deal_damage } from "./logic.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { game, world } from "./game.js";
 
-class Effect {
+export class Effect {
   dead = false;
+  name = null;
   constructor({ lifetime = -1, unit = null } = {}) {
     this.unit = unit;
 
@@ -47,6 +48,11 @@ class Effect {
 
   _render() {}
   _render_slow() {}
+
+  refresh(otherEffect) {
+    this.lifetime = otherEffect.lifetime;
+    this.end_time = game.time_now + otherEffect.lifetime;
+  }
 
   update() {
     this._update_lifetime();
@@ -270,6 +276,64 @@ export class DOT extends Effect {
       name: "Toxic", // 使用name作为标识符
       color: "green",
       render_affix: "☠️",
+    });
+  }
+}
+
+export class SlowEffect extends Effect {
+  constructor({
+    lifetime,
+    unit,
+    source_weapon = null,
+    multiplier = 0.6,
+    name = "Freezing",
+    color = "cyan",
+    render_affix = "❄️",
+  } = {}) {
+    super({ lifetime, unit });
+    this.source_weapon = source_weapon;
+    this.multiplier = multiplier;
+    this.name = name;
+    this.color = color;
+    this.render_affix = render_affix;
+    this.last_prompt_time = 0;
+    this.prompt_cooldown = 1200;
+  }
+
+  refresh(otherEffect) {
+    super.refresh(otherEffect);
+    this.multiplier = otherEffect.multiplier;
+  }
+
+  _update_custom() {
+    if (this.unit) {
+      this.unit.movement_speed_multiplier *= this.multiplier;
+    }
+  }
+
+  _render_slow() {
+    const now = game.time_now;
+    if (now - this.last_prompt_time < this.prompt_cooldown) {
+      return;
+    }
+
+    this.last_prompt_time = now;
+    CanvasTextPrompt.damage_prompt({
+      x: this.unit.x,
+      y: this.unit.y,
+      color: this.color,
+      damage: 0,
+      affix: this.render_affix,
+      lifetime: 600,
+    });
+  }
+
+  static freezing(unit, source_weapon) {
+    return new this({
+      unit,
+      source_weapon,
+      lifetime: source_weapon.slow_duration ?? 6000,
+      multiplier: source_weapon.slow_multiplier ?? 0.6,
     });
   }
 }
