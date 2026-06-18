@@ -99,6 +99,7 @@ class GunBasic {
       recoil_cooling_multiplier ?? this.recoil_cooling_multiplier;
     this.recoil_heat = 0;
     this.last_recoil_update_time = game.time_now;
+    this.fire_control_cooling = false;
     this.fire_control_release_time = 0;
 
     this.rate = (1000 / (rpm / 60)) * (game.targetFPS / 60); //每次发射间隔 ms
@@ -153,6 +154,12 @@ class GunBasic {
     this.recoil_heat = Math.max(0, this.recoil_heat - cooling);
   }
 
+  _start_fire_control_cooling() {
+    this.fire_control_cooling = true;
+    this.fire_control_release_time = game.time_now + 250;
+    this.last_recoil_update_time = game.time_now;
+  }
+
   _add_recoil_heat() {
     this.recoil_heat = Math.min(
       this.recoil * 2,
@@ -196,17 +203,19 @@ class GunBasic {
 
     const allowedRecoil = 4125.296125 * ((target.size || 9) / 9) / Math.max(target_distance, 1);
     const allowedHeat = Math.max(0, allowedRecoil - this.recoil / 2);
-    const nowTime = game.time_now;
-
-    if (nowTime < this.fire_control_release_time) {
+    if (this.fire_control_cooling) {
       this._cool_recoil_heat();
-      return this.recoil_heat > allowedHeat * 0.5;
+      if (this.recoil_heat > 0) {
+        return true;
+      }
+
+      this.fire_control_cooling = false;
+      this.fire_control_release_time = 0;
     }
 
     const reference = attacker.target_recoil_reference;
     if (target_distance > this._get_fire_control_hit_distance(reference, target)) {
-      this.fire_control_release_time = nowTime + 250;
-      this.last_recoil_update_time = nowTime;
+      this._start_fire_control_cooling();
       return true;
     }
 

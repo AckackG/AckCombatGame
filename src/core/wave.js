@@ -30,6 +30,7 @@ const WEAPON_STATE_FIELDS = [
   "fire_control_hit_rate",
   "recoil_cooling_multiplier",
   "recoil_heat",
+  "fire_control_cooling",
   "last_recoil_update_time",
   "fire_control_release_time",
   "explosion_damage",

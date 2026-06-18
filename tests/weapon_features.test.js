@@ -152,6 +152,39 @@ describe("Weapon feature updates", () => {
     expect(weapon.mag).toBeGreaterThan(0);
   });
 
+  it("waits for full recoil cooling before firing again", () => {
+    const weapon = GunFactory.get_gun("M16");
+    const attacker = new Fighter({ x: 0, y: 0, weapon });
+    const target = new Unit({
+      x: 1688,
+      y: 0,
+      size: 9,
+      color: "blue",
+      weapon: GunFactory.get_gun("M16"),
+    });
+    attacker.setTarget(target);
+
+    for (let i = 0; i < 10 && !weapon.fire_control_cooling; i++) {
+      game.time_now += weapon.rate + 1;
+      weapon.attack(attacker, target);
+    }
+
+    expect(weapon.fire_control_cooling).toBe(true);
+    const magBeforeCooling = weapon.mag;
+
+    game.time_now += 300;
+    weapon.attack(attacker, target);
+
+    expect(weapon.fire_control_cooling).toBe(true);
+    expect(weapon.mag).toBe(magBeforeCooling);
+
+    game.time_now += 2000;
+    weapon.attack(attacker, target);
+
+    expect(weapon.fire_control_cooling).toBe(false);
+    expect(weapon.mag).toBe(magBeforeCooling - 1);
+  });
+
   it("keeps non-fire-control weapons firing normally", () => {
     const weapon = GunFactory.get_gun("M870");
     weapon.frame_lastTime = 0;
