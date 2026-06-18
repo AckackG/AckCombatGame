@@ -3,7 +3,15 @@ import { deal_damage } from "../src/core/logic.js";
 import { game, world } from "../src/core/game.js";
 import { GunFactory } from "../src/core/weapons.js";
 import { waveManager } from "../src/core/wave.js";
-import { Base, ExplosiveMonster, Fighter, RangedMonster, Turret } from "../src/entities/units.js";
+import {
+  Base,
+  ExplosiveMonster,
+  Fighter,
+  Monster,
+  RangedMonster,
+  SpawnerMonster,
+  Turret,
+} from "../src/entities/units.js";
 
 describe("Review fixes", () => {
   beforeEach(() => {
@@ -68,7 +76,7 @@ describe("Review fixes", () => {
     waveManager.timeToNextWave = 3456;
     waveManager.spawnType = "soldier";
     waveManager.hasEnemies = true;
-    waveManager.saveGame();
+    waveManager.saveGame("wave_spawned");
 
     world.units.length = 0;
     game.money = 0;
@@ -88,6 +96,7 @@ describe("Review fixes", () => {
     expect(waveManager.timeToNextWave).toBe(3456);
     expect(waveManager.spawnType).toBe("soldier");
     expect(waveManager.hasEnemies).toBe(true);
+    expect(waveManager.lastCheckpointReason).toBe("wave_spawned");
 
     expect(restoredFighter.level).toBe(8);
     expect(restoredFighter.exp).toBe(123);
@@ -123,5 +132,39 @@ describe("Review fixes", () => {
     quarterSpy.mockReturnValue(true);
     waveManager.update(1);
     expect(renderSpy).toHaveBeenCalledTimes(1);
+  });
+
+  it("scales explosive monster split spawns by parent monster multiplier", () => {
+    const explosive = ExplosiveMonster.spawn_fast(500, 500, 2);
+    explosive.split_on_death = true;
+    explosive.hp = 0;
+
+    expect(explosive._update_hp()).toBe(false);
+
+    const spawned = world.units.filter((u) => u instanceof Monster);
+    expect(spawned).toHaveLength(2);
+    expect(spawned.every((u) => u.monster_mul === 1.2)).toBe(true);
+  });
+
+  it("scales explosive monster blast weapon by parent monster multiplier", () => {
+    game.time_now = 10000;
+    const explosive = ExplosiveMonster.spawn_fast(500, 500, 2);
+    explosive.split_on_death = false;
+    explosive.hp = 0;
+
+    expect(explosive._update_hp()).toBe(false);
+    expect(world.bullets).toHaveLength(1);
+    expect(world.bullets[0].source_weapon.wname).toBe("Monster_Explosion");
+    expect(world.bullets[0].source_weapon.damage).toBe(300);
+  });
+
+  it("scales spawner monster children by parent monster multiplier", () => {
+    const spawner = SpawnerMonster.spawn_big(500, 500, 2);
+    spawner.spawn_timer = 10000;
+
+    spawner.update();
+
+    const spawned = world.units.find((u) => u instanceof Monster);
+    expect(spawned.monster_mul).toBe(1);
   });
 });

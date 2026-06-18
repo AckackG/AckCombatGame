@@ -57,6 +57,13 @@ const UNIT_STATE_FIELDS = [
   "spawn_timer",
 ];
 
+const SAVE_CHECKPOINT = {
+  CAMPAIGN_START: "campaign_start",
+  WAVE_SPAWNED: "wave_spawned",
+  WAVE_CLEARED: "wave_cleared",
+  MANUAL: "manual",
+};
+
 class WaveManager {
   constructor() {
     this.waveNumber = 0;
@@ -65,6 +72,7 @@ class WaveManager {
     this.spawnType = "monster"; // 'monster' 或 'soldier'
     this.hasEnemies = false; // 缓存敌军状态
     this.maxSpawnsPerWave = 350;
+    this.lastCheckpointReason = null;
 
     this.world = null;
     this.game = null;
@@ -94,6 +102,7 @@ class WaveManager {
     });
     this.world.units.push(playerBase);
     this.playerBase = playerBase;
+    this.#saveCampaignCheckpoint(SAVE_CHECKPOINT.CAMPAIGN_START);
   }
 
   update(dt) {
@@ -147,7 +156,7 @@ class WaveManager {
       }
 
       if (hadEnemies && !this.hasEnemies) {
-        this.saveGame();
+        this.#saveCampaignCheckpoint(SAVE_CHECKPOINT.WAVE_CLEARED);
       }
     }
 
@@ -156,7 +165,7 @@ class WaveManager {
       this.spawnWave();
       this.timeToNextWave = this.waveInterval;
       this.hasEnemies = true;
-      this.saveGame();
+      this.#saveCampaignCheckpoint(SAVE_CHECKPOINT.WAVE_SPAWNED);
     }
 
     // 每0.25秒更新UI
@@ -323,6 +332,10 @@ class WaveManager {
     }
   }
 
+  #saveCampaignCheckpoint(reason) {
+    this.saveGame(reason);
+  }
+
   #serializeWeapon(weapon) {
     if (!weapon) return null;
 
@@ -415,10 +428,12 @@ class WaveManager {
     return unit;
   }
 
-  saveGame() {
+  saveGame(checkpointReason = SAVE_CHECKPOINT.MANUAL) {
     if (this.game.currentMode !== "CAMPAIGN") return;
+    this.lastCheckpointReason = checkpointReason;
     const saveData = {
       version: 2,
+      checkpointReason,
       waveNumber: this.waveNumber,
       money: this.game.money,
       timeToNextWave: this.timeToNextWave,
@@ -442,6 +457,7 @@ class WaveManager {
       this.game.money = saveData.money;
       this.timeToNextWave = saveData.timeToNextWave ?? 10000;
       this.spawnType = saveData.spawnType === "soldier" ? "soldier" : "monster";
+      this.lastCheckpointReason = saveData.checkpointReason || SAVE_CHECKPOINT.MANUAL;
 
       if (saveData.weapon_stats) {
         this.game.weapon_stats.weapons = new Map(saveData.weapon_stats);
