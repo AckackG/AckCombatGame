@@ -43,6 +43,7 @@ export class Unit extends EntityBasic {
   threat = 0; // 开火就有threat
 
   fixed_value = null; // 固定单位价值
+  is_monster = false;
 
   target = null; //攻击目标
   _is_rendergun = true;
@@ -890,14 +891,17 @@ export class Turret extends Fighter {
   combat_dodge_chance = 0;
   constructor({ x, y, weapon, size = 25, color = game.player_color, maxhp = 8000 } = {}) {
     //炮塔用任何武器都加强
-    let TurretGun = GunFactory.random_gun(0.5);
-    TurretGun.recoil /= 1.2;
-    TurretGun.ReloadTime /= 1.2;
-    TurretGun.burst *= 2;
-    TurretGun.magsize *= 2;
+    let TurretGun = weapon;
+    if (!TurretGun) {
+      TurretGun = GunFactory.random_gun(0.5);
+      TurretGun.recoil /= 1.2;
+      TurretGun.ReloadTime /= 1.2;
+      TurretGun.burst *= 2;
+      TurretGun.magsize *= 2;
 
-    if (TurretGun.PreFireRange) {
-      TurretGun.PreFireRange *= 3;
+      if (TurretGun.PreFireRange) {
+        TurretGun.PreFireRange *= 3;
+      }
     }
     super({
       x,
@@ -927,6 +931,7 @@ export class Monster extends Unit {
   combat_threat_range_mul = 10; //近战攻击Threat寻敌距离加长
 
   _is_rendergun = false; //不渲染武器
+  is_monster = true;
 
   constructor({
     x,
@@ -949,6 +954,7 @@ export class Monster extends Unit {
       weapon,
     });
     this.speed_up_factor = speed_up_factor;
+    this.monster_mul = monster_mul;
     this.last_position = { x: this.x, y: this.y };
     this.stuck_counter = 0;
     this.random_offset_angle = 0;
@@ -1133,7 +1139,9 @@ export class RangedMonster extends Monster {
 
 export class ExplosiveMonster extends Monster {
   constructor(params = {}) {
-    params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 15 });
+    if (!params.weapon) {
+      params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 15 });
+    }
     super(params);
     this.symbol = "x";
     this.split_on_death = params.split_on_death ?? (Math.random() > 0.5); // 随机决定是自爆还是分裂
@@ -1166,7 +1174,9 @@ export class ExplosiveMonster extends Monster {
 
 export class SpawnerMonster extends Monster {
   constructor(params = {}) {
-    params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 30 });
+    if (!params.weapon) {
+      params.weapon = new MeleeWeapon({ monster_mul: params.monster_mul, damage: 30 });
+    }
     super(params);
     this.symbol = "double_circle";
     this.spawn_timer = 0;

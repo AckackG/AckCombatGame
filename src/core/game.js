@@ -445,13 +445,16 @@ class Game {
   weapon_stats = Weaponstat;
 
   Guns_SpecialNames = Object.values(Guns_Data)
-    .filter((gun) => gun.special)
+    .filter((gun) => gun.special && !gun.monster_only)
     .map((gun) => gun.wname);
   Guns_NormalNames = Object.values(Guns_Data)
-    .filter((gun) => !gun.special)
+    .filter((gun) => !gun.special && !gun.monster_only)
+    .map((gun) => gun.wname);
+  Guns_MonsterOnlyNames = Object.values(Guns_Data)
+    .filter((gun) => gun.monster_only)
     .map((gun) => gun.wname);
   Guns_Data = Guns_Data;
-  Guns_Names = [...this.Guns_NormalNames, ...this.Guns_SpecialNames];
+  Guns_Names = [...this.Guns_NormalNames, ...this.Guns_SpecialNames, ...this.Guns_MonsterOnlyNames];
 
   #update_game() {
     this.#incrementCounter();

@@ -177,6 +177,7 @@ export default {
     soundType: "rpg",
   },
   Monster_Spit: {
+    monster_only: true,
     wname: "Monster_Spit",
     desc: "远程怪物的毒液喷吐",
     magsize: 999,
@@ -191,6 +192,7 @@ export default {
     special: true,
   },
   Monster_Explosion: {
+    monster_only: true,
     wname: "Monster_Explosion",
     desc: "自爆怪的爆炸伤害",
     magsize: 1,

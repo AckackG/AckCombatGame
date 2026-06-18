@@ -87,7 +87,7 @@ function startGame(mode) {
 
   if (mode === "CAMPAIGN") {
     if (waveManager.loadGame()) {
-      game.start_game(); // Initialize game loop without clearing everything
+      // Initialize game loop without clearing everything
       // Note: loadGame cleared and setup units, but start_game() overwrites them
       // Actually we must run start_game first, THEN load
       game.start_game();

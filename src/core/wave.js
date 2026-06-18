@@ -1,7 +1,61 @@
 import { Monster, Unit, Base, Fighter, Turret, RangedMonster, ExplosiveMonster, SpawnerMonster } from "../entities/units.js";
 import { Battalion } from "../entities/battalion.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
-import { GunFactory } from "./weapons.js";
+import { GunFactory, MeleeWeapon } from "./weapons.js";
+
+const UNIT_CLASS_BY_NAME = {
+  Unit,
+  Base,
+  Fighter,
+  Turret,
+  Monster,
+  RangedMonster,
+  ExplosiveMonster,
+  SpawnerMonster,
+};
+
+const WEAPON_STATE_FIELDS = [
+  "damage",
+  "burst",
+  "rpm",
+  "magsize",
+  "mag",
+  "recoil",
+  "range",
+  "PreFireRange",
+  "Range_Max",
+  "ReloadTime",
+  "attenuation_factor",
+  "stat_damage_total",
+  "stat_bullets_hit",
+  "stat_kills",
+  "stat_damage_estimate",
+  "stat_bullets_fired",
+  "reloading",
+  "reloading_boost",
+];
+
+const UNIT_STATE_FIELDS = [
+  "size",
+  "color",
+  "speed",
+  "hp",
+  "maxhp",
+  "armor",
+  "evasion",
+  "threat",
+  "fixed_value",
+  "combat_dodge_chance",
+  "combat_threat_chance",
+  "combat_threat_range_mul",
+  "can_preaim",
+  "level",
+  "exp",
+  "hp_regen",
+  "monster_mul",
+  "split_on_death",
+  "spawn_timer",
+];
 
 class WaveManager {
   constructor() {
@@ -72,6 +126,7 @@ class WaveManager {
 
     // 每秒检查一次敌军状态
     if (this.game.is_full_second()) {
+      const hadEnemies = this.hasEnemies;
       this.hasEnemies = this.world.units.some((u) => u.color !== this.game.player_color);
 
       // --- 清场后自动换弹逻辑 ---
@@ -90,12 +145,18 @@ class WaveManager {
           console.log("No enemies left! Next wave in 5s.");
         }
       }
+
+      if (hadEnemies && !this.hasEnemies) {
+        this.saveGame();
+      }
     }
 
     // 时间到了就刷怪
     if (this.timeToNextWave <= 0) {
       this.spawnWave();
       this.timeToNextWave = this.waveInterval;
+      this.hasEnemies = true;
+      this.saveGame();
     }
 
     // 每0.25秒更新UI
@@ -245,7 +306,6 @@ class WaveManager {
 
   spawnWave() {
     this.waveNumber++;
-    this.saveGame();
 
     const playerStrength = this._calculatePlayerStrength();
     let baseCount = 5 + this.waveNumber * 2;
@@ -263,22 +323,109 @@ class WaveManager {
     }
   }
 
+  #serializeWeapon(weapon) {
+    if (!weapon) return null;
+
+    const data = {
+      wname: weapon.wname,
+    };
+
+    WEAPON_STATE_FIELDS.forEach((field) => {
+      if (weapon[field] !== undefined) {
+        data[field] = weapon[field];
+      }
+    });
+
+    if (weapon.reloading && weapon.reloading_endTime !== null) {
+      data.reloading_remaining = Math.max(0, weapon.reloading_endTime - this.game.time_now);
+    }
+
+    return data;
+  }
+
+  #restoreWeapon(data) {
+    if (!data) return null;
+
+    const weapon = this.game.Guns_Names.includes(data.wname)
+      ? GunFactory.get_gun(data.wname)
+      : new MeleeWeapon({ wname: data.wname || "Melee" });
+
+    WEAPON_STATE_FIELDS.forEach((field) => {
+      if (data[field] !== undefined) {
+        weapon[field] = data[field];
+      }
+    });
+
+    weapon.rate = (1000 / (weapon.rpm / 60)) * (this.game.targetFPS / 60);
+    if (data.reloading && data.reloading_remaining !== undefined) {
+      weapon.reloading_endTime = this.game.time_now + data.reloading_remaining;
+    }
+
+    return weapon;
+  }
+
+  #serializeUnit(unit) {
+    const data = {
+      className: unit.constructor.name,
+      x: unit.x,
+      y: unit.y,
+      weapon: this.#serializeWeapon(unit.weapon),
+    };
+
+    UNIT_STATE_FIELDS.forEach((field) => {
+      if (unit[field] !== undefined) {
+        data[field] = unit[field];
+      }
+    });
+
+    return data;
+  }
+
+  #restoreUnit(data) {
+    const UnitClass = UNIT_CLASS_BY_NAME[data.className] || Unit;
+    const weaponData = data.weapon || (data.weapon_name ? { wname: data.weapon_name } : null);
+    const weapon = this.#restoreWeapon(weaponData) || GunFactory.random_gun();
+    const params = {
+      x: data.x,
+      y: data.y,
+      size: data.size,
+      color: data.color ?? this.game.player_color,
+      speed: data.speed,
+      maxhp: data.maxhp,
+      weapon,
+      monster_mul: data.monster_mul,
+      split_on_death: data.split_on_death,
+    };
+
+    const unit =
+      UnitClass === Base
+        ? new Base({ ...params, hp: data.maxhp || data.hp || 20000 })
+        : new UnitClass(params);
+
+    UNIT_STATE_FIELDS.forEach((field) => {
+      if (data[field] !== undefined) {
+        unit[field] = data[field];
+      }
+    });
+
+    if (unit.weapon) {
+      unit.combat_threat_range = unit.weapon.range * unit.combat_threat_range_mul;
+    }
+
+    return unit;
+  }
+
   saveGame() {
     if (this.game.currentMode !== "CAMPAIGN") return;
     const saveData = {
+      version: 2,
       waveNumber: this.waveNumber,
       money: this.game.money,
+      timeToNextWave: this.timeToNextWave,
+      spawnType: this.spawnType,
+      hasEnemies: this.hasEnemies,
       weapon_stats: Array.from(this.game.weapon_stats.weapons.entries()),
-      playerUnits: this.world.units
-        .filter(u => u.color === this.game.player_color && !u.dead)
-        .map(u => ({
-          className: u.constructor.name,
-          x: u.x,
-          y: u.y,
-          hp: u.hp,
-          maxhp: u.maxhp,
-          weapon_name: u.weapon ? u.weapon.wname : null,
-        }))
+      units: this.world.units.filter((u) => !u.dead).map((u) => this.#serializeUnit(u)),
     };
     localStorage.setItem("campaign_save", JSON.stringify(saveData));
   }
@@ -288,14 +435,13 @@ class WaveManager {
     if (!saveStr) return false;
     try {
       const saveData = JSON.parse(saveStr);
-      if (!saveData.waveNumber) return false;
+      if (typeof saveData.waveNumber !== "number") return false;
 
       this.game.currentMode = "CAMPAIGN";
       this.waveNumber = saveData.waveNumber;
       this.game.money = saveData.money;
-      this.timeToNextWave = 10000;
-      this.spawnType = "monster";
-      this.hasEnemies = false;
+      this.timeToNextWave = saveData.timeToNextWave ?? 10000;
+      this.spawnType = saveData.spawnType === "soldier" ? "soldier" : "monster";
 
       if (saveData.weapon_stats) {
         this.game.weapon_stats.weapons = new Map(saveData.weapon_stats);
@@ -305,30 +451,13 @@ class WaveManager {
       this.world.bullets.length = 0;
 
       let hasBase = false;
-      saveData.playerUnits.forEach(uData => {
-        const weapon = uData.weapon_name ? GunFactory.get_gun(uData.weapon_name) : null;
-        let unitObj;
-        const params = {
-          x: uData.x,
-          y: uData.y,
-          color: this.game.player_color,
-          maxhp: uData.maxhp,
-          weapon: weapon
-        };
-        
-        if (uData.className === "Base") {
-          unitObj = new Base({...params, size: 40});
+      const unitsData = saveData.units || saveData.playerUnits || [];
+      unitsData.forEach(uData => {
+        const unitObj = this.#restoreUnit(uData);
+        if (unitObj instanceof Base) {
           this.playerBase = unitObj;
           hasBase = true;
-        } else if (uData.className === "Fighter") {
-          unitObj = new Fighter(params);
-        } else if (uData.className === "Turret") {
-          unitObj = new Turret(params);
-        } else {
-          unitObj = new Unit(params);
         }
-        
-        if (uData.hp !== undefined) unitObj.hp = uData.hp;
         this.world.units.push(unitObj);
       });
 
@@ -343,6 +472,10 @@ class WaveManager {
         });
         this.world.units.push(this.playerBase);
       }
+
+      this.hasEnemies =
+        saveData.hasEnemies ??
+        this.world.units.some((u) => u.color !== this.game.player_color);
 
       return true;
     } catch (e) {
