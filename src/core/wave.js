@@ -160,7 +160,7 @@ class WaveManager {
     }
 
     // 每0.25秒更新UI
-    if (this.game.is_quarter_second) {
+    if (this.game.is_quarter_second()) {
       this.renderUI();
     }
   }

@@ -146,12 +146,11 @@ btn_reset_view.addEventListener("click", () => {
 
 //DEBUG信息按钮
 btn_showdebug.addEventListener("click", () => {
+  const shouldShowDebug = !game.is_DebugMode();
   //反转按钮
-  info_debug.style.display = game.is_DebugMode() ? "none" : "block";
+  info_debug.style.display = shouldShowDebug ? "block" : "none";
   //改变颜色
-  btn_showdebug.style.backgroundColor = info_debug.style.display = game.is_DebugMode()
-    ? "green"
-    : "blue";
+  btn_showdebug.style.backgroundColor = shouldShowDebug ? "green" : "blue";
 
   console.table(game.weapon_stats.get_report());
 });
@@ -275,31 +274,6 @@ function drop_unit(x, y) {
     world.units.push(h);
   }
 }
-
-// --- 注册滚轮缩放事件 ---
-canvas.addEventListener(
-  "wheel",
-  (event) => {
-    world.viewport.handleZoom(event);
-  },
-  { passive: false }
-); // passive: false 允许我们使用 preventDefault()
-
-canvas.addEventListener("contextmenu", function (event) {
-  event.preventDefault();
-  // 右键取消放置模式
-  if (placing.is_placing) {
-    placing.reset_units_btn();
-  }
-
-  // 使用 viewport 转换坐标
-  const { x, y } = world.viewport.screenToWorld(event.clientX, event.clientY);
-
-  ctx.beginPath();
-  ctx.arc(x, y, 10, 0, 2 * Math.PI);
-  ctx.fillStyle = "red";
-  ctx.fill();
-});
 
 // --- 视口交互逻辑 ---
 

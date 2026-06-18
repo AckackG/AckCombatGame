@@ -5,9 +5,9 @@ document.body.innerHTML = `
     <div id="fps"></div>
     <div id="stat"></div>
     <div id="perf"></div>
-    <div id="debufinfo"></div>
+    <div id="debufinfo" style="display: none"></div>
   </div>
-  <div id="units"><div></div></div>
+  <div id="units"><button></button><button></button><button></button></div>
   <button id="button1"></button>
   <button id="btn-pause"></button>
   <button id="button2"></button>
@@ -15,7 +15,15 @@ document.body.innerHTML = `
   <button id="button4"></button>
   <button id="button5"></button>
   <button id="unitdummy"></button>
-  <button id="playerdummy"></button>
+  <div class="debug_units">
+    <div id="debug_units_player"><button id="playerdummy"></button></div>
+    <div id="debug_units_enemy"></div>
+  </div>
+  <button id="btn-reset-view"></button>
+  <button id="btn-show-stats"></button>
+  <div id="stats-container"></div>
+  <button id="btn-stats-back"></button>
+  <div id="stats-content"></div>
   <div id="main-menu"></div>
   <div id="game-container"></div>
   <button id="btn-campaign"></button>

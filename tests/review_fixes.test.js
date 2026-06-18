@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { deal_damage } from "../src/core/logic.js";
 import { game, world } from "../src/core/game.js";
 import { GunFactory } from "../src/core/weapons.js";
@@ -104,5 +104,24 @@ describe("Review fixes", () => {
 
     expect(restoredExplosive.monster_mul).toBe(2);
     expect(restoredExplosive.split_on_death).toBe(true);
+  });
+
+  it("renders campaign wave UI only on quarter-second ticks", () => {
+    const renderSpy = vi.spyOn(waveManager, "renderUI").mockImplementation(() => {});
+    game.paused = false;
+    game.isGameOver = false;
+    game.currentMode = "CAMPAIGN";
+    waveManager.playerBase = null;
+    waveManager.timeToNextWave = 1000;
+    vi.spyOn(game, "is_full_second").mockReturnValue(false);
+    const quarterSpy = vi.spyOn(game, "is_quarter_second").mockReturnValue(false);
+
+    waveManager.update(1);
+    expect(quarterSpy).toHaveBeenCalled();
+    expect(renderSpy).not.toHaveBeenCalled();
+
+    quarterSpy.mockReturnValue(true);
+    waveManager.update(1);
+    expect(renderSpy).toHaveBeenCalledTimes(1);
   });
 });
