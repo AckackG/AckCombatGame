@@ -8,6 +8,7 @@ export default {
     damage: 25,
     recoil: 4.5,
     use_fire_control: true,
+    recoil_cooling_multiplier: 0.46,
     range: 600, // AI单位会在这个距离停下, 子弹伤害衰减的基准距离 // 考虑分离
     // PreFireRange:1200, // 单位 距离目标 PreFireRange 或者 2 倍 range 即可开火
     // Range_Max:2100,  // 子弹消失距离, 默认为 3.5倍 range
@@ -22,6 +23,7 @@ export default {
     damage: 34,
     recoil: 3.6,
     use_fire_control: true,
+    recoil_cooling_multiplier: 0.37,
     range: 630,
     ReloadTime: 4500,
   },
@@ -34,6 +36,7 @@ export default {
     damage: 16,
     recoil: 3.2,
     use_fire_control: true,
+    recoil_cooling_multiplier: 0.48,
     range: 670,
     ReloadTime: 4000,
   },
@@ -46,6 +49,7 @@ export default {
     damage: 15,
     recoil: 3,
     use_fire_control: true,
+    recoil_cooling_multiplier: 0.71,
     range: 700,
     Range_Max: 4000,
     ReloadTime: 7000,
@@ -117,6 +121,7 @@ export default {
     damage: 19,
     recoil: 6.0,
     use_fire_control: true,
+    recoil_cooling_multiplier: 0.85,
     range: 350,
     PreFireRange: 950,
     ReloadTime: 4500,
@@ -131,6 +136,7 @@ export default {
     damage: 35,
     recoil: 5.0,
     use_fire_control: true,
+    recoil_cooling_multiplier: 0.71,
     range: 420,
     PreFireRange: 1050,
     ReloadTime: 3500,

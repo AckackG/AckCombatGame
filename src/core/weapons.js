@@ -24,6 +24,7 @@ const PROJECTILE_SPEEDS = {
 
 class GunBasic {
   fire_control_hit_rate = 0.25;
+  recoil_cooling_multiplier = 1;
 
   //统计相关
   stat_damage_total = 0; //实际造成的伤害
@@ -74,6 +75,7 @@ class GunBasic {
     attenuation_factor = 1, // 默认为 1，开启衰减
     use_fire_control = false,
     fire_control_hit_rate = null,
+    recoil_cooling_multiplier = null,
   } = {}) {
     this.damage = damage; //子弹伤害
     this.burst = burst; //每轮射击几发（霰弹）
@@ -93,6 +95,8 @@ class GunBasic {
     this.attenuation_factor = attenuation_factor;
     this.use_fire_control = use_fire_control;
     this.fire_control_hit_rate = fire_control_hit_rate ?? this.fire_control_hit_rate;
+    this.recoil_cooling_multiplier =
+      recoil_cooling_multiplier ?? this.recoil_cooling_multiplier;
     this.recoil_heat = 0;
     this.last_recoil_update_time = game.time_now;
     this.fire_control_release_time = 0;
@@ -130,7 +134,10 @@ class GunBasic {
   }
 
   _get_recoil_cooling_per_second() {
-    return (this.recoil * 1.25) / Math.sqrt(this._get_recoil_pressure());
+    return (
+      ((this.recoil * 1.25) / Math.sqrt(this._get_recoil_pressure())) *
+      this.recoil_cooling_multiplier
+    );
   }
 
   _update_recoil_heat() {

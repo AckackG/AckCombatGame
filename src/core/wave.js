@@ -28,6 +28,7 @@ const WEAPON_STATE_FIELDS = [
   "attenuation_factor",
   "use_fire_control",
   "fire_control_hit_rate",
+  "recoil_cooling_multiplier",
   "recoil_heat",
   "last_recoil_update_time",
   "fire_control_release_time",

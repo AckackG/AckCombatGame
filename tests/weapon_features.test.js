@@ -101,6 +101,37 @@ describe("Weapon feature updates", () => {
     expect(world.bullets).toHaveLength(0);
   });
 
+  it("uses class default recoil cooling multiplier unless a weapon overrides it", () => {
+    expect(GunFactory.get_gun("RPG_7").recoil_cooling_multiplier).toBe(1);
+    expect(GunFactory.get_gun("M16").recoil_cooling_multiplier).toBe(0.46);
+  });
+
+  it("lets fire-control rifles pause at long-range edge after heat builds up", () => {
+    const weapon = GunFactory.get_gun("M16");
+    const attacker = new Fighter({ x: 0, y: 0, weapon });
+    const target = new Unit({
+      x: 1688,
+      y: 0,
+      size: 9,
+      color: "blue",
+      weapon: GunFactory.get_gun("M16"),
+    });
+    attacker.setTarget(target);
+
+    let heldFire = false;
+    for (let i = 0; i < 40; i++) {
+      game.time_now += weapon.rate + 1;
+      weapon.attack(attacker, target);
+      if (weapon.fire_control_release_time > game.time_now) {
+        heldFire = true;
+        break;
+      }
+    }
+
+    expect(heldFire).toBe(true);
+    expect(weapon.mag).toBeGreaterThan(0);
+  });
+
   it("keeps non-fire-control weapons firing normally", () => {
     const weapon = GunFactory.get_gun("M870");
     weapon.frame_lastTime = 0;
