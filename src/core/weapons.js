@@ -140,7 +140,7 @@ class GunBasic {
     );
   }
 
-  _update_recoil_heat() {
+  _cool_recoil_heat() {
     const nowTime = game.time_now;
     const deltaTime = Math.max(0, nowTime - this.last_recoil_update_time);
     this.last_recoil_update_time = nowTime;
@@ -199,12 +199,14 @@ class GunBasic {
     const nowTime = game.time_now;
 
     if (nowTime < this.fire_control_release_time) {
+      this._cool_recoil_heat();
       return this.recoil_heat > allowedHeat * 0.5;
     }
 
     const reference = attacker.target_recoil_reference;
     if (target_distance > this._get_fire_control_hit_distance(reference, target)) {
       this.fire_control_release_time = nowTime + 250;
+      this.last_recoil_update_time = nowTime;
       return true;
     }
 
@@ -305,8 +307,6 @@ class GunBasic {
    * @returns {number} 返回生成的子弹数量，如果未射击则返回0。
    */
   attack(attacker, target) {
-    this._update_recoil_heat();
-
     // 1. 装弹检查 (最快，优先)
     if (this.reloading) {
       if (game.time_now > this.reloading_endTime) {
@@ -314,6 +314,7 @@ class GunBasic {
         this.mag = this.magsize;
         this.reloading_boost = false;
       } else {
+        this._cool_recoil_heat();
         return;
       }
     }
@@ -323,6 +324,7 @@ class GunBasic {
       this.reloading = true;
       let reloadtime = this.reloading_boost ? this.ReloadTime / 2 : this.ReloadTime;
       this.reloading_endTime = game.time_now + reloadtime;
+      this._cool_recoil_heat();
       return;
     }
 
@@ -340,6 +342,7 @@ class GunBasic {
     // 既然已经决定要开火了，现在才检查是否在射程内
     const target_distance = unit_distance(attacker, target);
     if (!this._is_fire_control_enabled(attacker) && target_distance > this.PreFireRange) {
+      this._cool_recoil_heat();
       return;
     }
 

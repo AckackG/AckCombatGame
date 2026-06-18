@@ -103,7 +103,27 @@ describe("Weapon feature updates", () => {
 
   it("uses class default recoil cooling multiplier unless a weapon overrides it", () => {
     expect(GunFactory.get_gun("RPG_7").recoil_cooling_multiplier).toBe(1);
-    expect(GunFactory.get_gun("M16").recoil_cooling_multiplier).toBe(0.46);
+    expect(GunFactory.get_gun("M16").recoil_cooling_multiplier).toBe(0.06);
+  });
+
+  it("does not cool recoil heat during continuous fire cadence", () => {
+    const weapon = GunFactory.get_gun("M16");
+    const attacker = new Fighter({ x: 0, y: 0, weapon });
+    const target = new Unit({
+      x: 100,
+      y: 0,
+      size: 9,
+      color: "blue",
+      weapon: GunFactory.get_gun("M16"),
+    });
+    attacker.setTarget(target);
+
+    weapon.attack(attacker, target);
+    const heatAfterShot = weapon.recoil_heat;
+    game.time_now += weapon.rate / 2;
+    weapon.attack(attacker, target);
+
+    expect(weapon.recoil_heat).toBe(heatAfterShot);
   });
 
   it("lets fire-control rifles pause at long-range edge after heat builds up", () => {
