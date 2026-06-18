@@ -103,7 +103,7 @@ describe("Weapon feature updates", () => {
 
   it("uses class default recoil cooling multiplier unless a weapon overrides it", () => {
     expect(GunFactory.get_gun("RPG_7").recoil_cooling_multiplier).toBe(1);
-    expect(GunFactory.get_gun("M16").recoil_cooling_multiplier).toBe(0.06);
+    expect(GunFactory.get_gun("M16").recoil_cooling_multiplier).toBe(0.52);
   });
 
   it("does not cool recoil heat during continuous fire cadence", () => {
@@ -152,7 +152,7 @@ describe("Weapon feature updates", () => {
     expect(weapon.mag).toBeGreaterThan(0);
   });
 
-  it("waits for full recoil cooling before firing again", () => {
+  it("waits for full recoil cooling before firing again within one burst-group time", () => {
     const weapon = GunFactory.get_gun("M16");
     const attacker = new Fighter({ x: 0, y: 0, weapon });
     const target = new Unit({
@@ -172,13 +172,13 @@ describe("Weapon feature updates", () => {
     expect(weapon.fire_control_cooling).toBe(true);
     const magBeforeCooling = weapon.mag;
 
-    game.time_now += 300;
+    game.time_now += weapon.rate;
     weapon.attack(attacker, target);
 
     expect(weapon.fire_control_cooling).toBe(true);
     expect(weapon.mag).toBe(magBeforeCooling);
 
-    game.time_now += 2000;
+    game.time_now += weapon.rate + 1;
     weapon.attack(attacker, target);
 
     expect(weapon.fire_control_cooling).toBe(false);
