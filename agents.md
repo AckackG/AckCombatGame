@@ -39,6 +39,8 @@
 │       └── weapons_data.js  武器属性表（JSON 对象）
 ├── assets/sounds/      音效资源
 └── doc/                开发文档
+    ├── game_design/    游戏设计文档
+    └── program_logic/  程序逻辑文档
 ```
 
 ## 代码规范
@@ -70,9 +72,12 @@
 
 ### doc index
 
-- `doc/core_engine.md` — 核心引擎：游戏循环、四叉树碰撞、性能与世界状态。
-- `doc/sys_entities.md` — 实体逻辑：单位架构、升级机制、AI 索敌。
-- `doc/sys_combat.md` — 战斗系统：武器核心、子弹行为（组合模式）、伤害衰减与爆炸逻辑。
-- `doc/sys_campaign.md` — 战役管理：波次生成、动态难度伸缩算法。
-- `doc/sys_ui_controls.md` — UI与交互：RTS 框选、视口缩放平移、HUD与数据库界面。
-- `doc/data_recoil.md` — 纯数据：后坐力与命中率的射程数据参考表。
+- 游戏设计
+  - `doc/game_design/weapon_design.md` — 武器设计：武器分类、战斗定位、距离/命中、后坐力参考与未来武器方向。
+  - `doc/game_design/unit_design.md` — 单位设计：玩家单位、炮塔、敌军士兵、怪物、测试单位与未来单位方向。
+  - `doc/game_design/world_logic_design.md` — 世界逻辑设计：世界状态、索敌、移动、碰撞与空间划分规则。
+  - `doc/game_design/campaign_design.md` — 战役设计：波次推进、稳定检查点、动态难度与敌人渐进。
+  - `doc/game_design/other_design.md` — 其他设计：UI体验、沙盒体验、音效反馈与未来内容方向。
+- 程序逻辑
+  - `doc/program_logic/frontend.md` — 前端程序逻辑：入口、主循环、世界实体、战斗、战役、UI输入、渲染性能与测试。
+  - `doc/program_logic/backend.md` — 后端程序逻辑：当前无后端；记录本地存储约束和未来可能的服务职责。
