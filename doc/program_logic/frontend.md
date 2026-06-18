@@ -1,6 +1,6 @@
 # 前端程序逻辑
 
-本项目当前是纯前端 HTML5 Canvas 游戏，无构建步骤，使用 ES Modules。
+本项目当前是纯前端 HTML5 Canvas 游戏，无构建步骤，使用 ES Modules 和 Vanilla JS，不依赖第三方游戏引擎。部署目标是 GitHub Pages 子页面。
 
 ## 入口与主循环
 
@@ -12,6 +12,8 @@
 ## 世界与实体
 
 - `World` 维护 `units`、`bullets` 和 `CanvasPrompts`。
+- `EntityBasic` 是最基础的实体基类，提供位置和基础渲染属性。
+- `Unit` 是战斗单位基类，包含生命值、阵营颜色、移动逻辑、武器挂载和状态效果列表。
 - `src/entities/units.js` 定义 `Unit`、`Fighter`、`Turret`、`Monster`、`Base` 等单位。
 - `src/entities/projectiles.js` 定义 `Bullet` 与 `BulletFactory`。
 - `src/entities/bullet_behaviors.js` 存放子弹行为插件，例如爆炸、燃烧和中毒。

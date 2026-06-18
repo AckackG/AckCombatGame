@@ -73,11 +73,13 @@
 ### doc index
 
 - 游戏设计
-  - `doc/game_design/weapon_design.md` — 武器设计：武器分类、战斗定位、距离/命中、后坐力参考与未来武器方向。
-  - `doc/game_design/unit_design.md` — 单位设计：玩家单位、炮塔、敌军士兵、怪物、测试单位与未来单位方向。
+  - `doc/game_design/weapon_design.md` — 武器设计：武器分类、战斗定位、距离/命中与后坐力参考。
+  - `doc/game_design/recoil_reference.md` — 后坐力参考：不同后坐力下命中 SIZE=9 人类目标的射程数据表。
+  - `doc/game_design/unit_design.md` — 单位设计：玩家单位、炮塔、敌军士兵、怪物与测试单位。
   - `doc/game_design/world_logic_design.md` — 世界逻辑设计：世界状态、索敌、移动、碰撞与空间划分规则。
   - `doc/game_design/campaign_design.md` — 战役设计：波次推进、稳定检查点、动态难度与敌人渐进。
-  - `doc/game_design/other_design.md` — 其他设计：UI体验、沙盒体验、音效反馈与未来内容方向。
+  - `doc/game_design/other_design.md` — 其他设计：UI体验、沙盒体验与音效反馈。
+  - `doc/game_design/update_plan.md` — 更新计划：武器、单位、战役、世界逻辑、性能和平台能力的未来更新方向。
 - 程序逻辑
   - `doc/program_logic/frontend.md` — 前端程序逻辑：入口、主循环、世界实体、战斗、战役、UI输入、渲染性能与测试。
-  - `doc/program_logic/backend.md` — 后端程序逻辑：当前无后端；记录本地存储约束和未来可能的服务职责。
+  - `doc/program_logic/backend.md` — 后端程序逻辑：当前无后端；记录本地存储约束和引入后端前的文档要求。
