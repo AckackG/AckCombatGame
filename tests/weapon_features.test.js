@@ -58,6 +58,49 @@ describe("Weapon feature updates", () => {
     expect(world.bullets).toHaveLength(0);
   });
 
+  it("ignores PreFireRange for fire-control weapons when hit-rate distance allows firing", () => {
+    const weapon = GunFactory.get_gun("M16");
+    weapon.use_fire_control = true;
+    weapon.frame_lastTime = 0;
+
+    const attacker = new Fighter({ x: 0, y: 0, weapon });
+    const target = new Unit({
+      x: 1500,
+      y: 0,
+      size: 9,
+      color: "blue",
+      weapon: GunFactory.get_gun("M16"),
+    });
+    attacker.setTarget(target);
+
+    weapon.attack(attacker, target);
+
+    expect(weapon.mag).toBe(weapon.magsize - 1);
+    expect(world.bullets).toHaveLength(1);
+  });
+
+  it("lets weapons customize the fire-control hit-rate threshold", () => {
+    const weapon = GunFactory.get_gun("M16");
+    weapon.use_fire_control = true;
+    weapon.fire_control_hit_rate = 0.5;
+    weapon.frame_lastTime = 0;
+
+    const attacker = new Fighter({ x: 0, y: 0, weapon });
+    const target = new Unit({
+      x: 1500,
+      y: 0,
+      size: 9,
+      color: "blue",
+      weapon: GunFactory.get_gun("M16"),
+    });
+    attacker.setTarget(target);
+
+    weapon.attack(attacker, target);
+
+    expect(weapon.mag).toBe(weapon.magsize);
+    expect(world.bullets).toHaveLength(0);
+  });
+
   it("keeps non-fire-control weapons firing normally", () => {
     const weapon = GunFactory.get_gun("M870");
     weapon.frame_lastTime = 0;

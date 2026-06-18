@@ -23,6 +23,8 @@ const PROJECTILE_SPEEDS = {
 };
 
 class GunBasic {
+  fire_control_hit_rate = 0.25;
+
   //统计相关
   stat_damage_total = 0; //实际造成的伤害
   stat_bullets_hit = 0; //命中的子弹树
@@ -71,6 +73,7 @@ class GunBasic {
     soundType = null,
     attenuation_factor = 1, // 默认为 1，开启衰减
     use_fire_control = false,
+    fire_control_hit_rate = null,
   } = {}) {
     this.damage = damage; //子弹伤害
     this.burst = burst; //每轮射击几发（霰弹）
@@ -89,6 +92,7 @@ class GunBasic {
     this.wname = wname;
     this.attenuation_factor = attenuation_factor;
     this.use_fire_control = use_fire_control;
+    this.fire_control_hit_rate = fire_control_hit_rate ?? this.fire_control_hit_rate;
     this.recoil_heat = 0;
     this.last_recoil_update_time = game.time_now;
     this.fire_control_release_time = 0;
@@ -154,13 +158,32 @@ class GunBasic {
     return Boolean(this.use_fire_control || attacker?.use_fire_control);
   }
 
-  _should_hold_fire(attacker, target, target_distance) {
-    if (!this._is_fire_control_enabled(attacker)) {
-      return false;
+  _get_fire_control_hit_key() {
+    if (this.fire_control_hit_rate >= 1) return "hit100";
+    if (this.fire_control_hit_rate >= 0.8) return "hit80";
+    if (this.fire_control_hit_rate >= 0.5) return "hit50";
+    return "hit25";
+  }
+
+  _get_fire_control_hit_distance(reference, target) {
+    const hit_key = this._get_fire_control_hit_key();
+    const row = reference ? get_recoil_reference_row(reference, this.current_recoil) : null;
+    if (row) {
+      return row[hit_key];
     }
 
-    const reference = attacker.target_recoil_reference;
-    if (!reference) {
+    const hit25_distance = 4125.296125 * ((target.size || 9) / 9) / this.current_recoil;
+    const hit_distance_mul = {
+      hit100: 0.25,
+      hit80: 0.3125,
+      hit50: 0.5,
+      hit25: 1,
+    };
+    return hit25_distance * hit_distance_mul[hit_key];
+  }
+
+  _should_hold_fire(attacker, target, target_distance) {
+    if (!this._is_fire_control_enabled(attacker)) {
       return false;
     }
 
@@ -172,8 +195,8 @@ class GunBasic {
       return this.recoil_heat > allowedHeat * 0.5;
     }
 
-    const row = get_recoil_reference_row(reference, this.current_recoil);
-    if (row && target_distance > row.hit25) {
+    const reference = attacker.target_recoil_reference;
+    if (target_distance > this._get_fire_control_hit_distance(reference, target)) {
       this.fire_control_release_time = nowTime + 250;
       return true;
     }
@@ -309,7 +332,7 @@ class GunBasic {
     // 4. 距离检查 (Heavy Math: 开方运算)
     // 既然已经决定要开火了，现在才检查是否在射程内
     const target_distance = unit_distance(attacker, target);
-    if (target_distance > this.PreFireRange) {
+    if (!this._is_fire_control_enabled(attacker) && target_distance > this.PreFireRange) {
       return;
     }
 
