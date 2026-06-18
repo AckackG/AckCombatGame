@@ -1,9 +1,13 @@
 import {
   generate_recoil_reference,
+  get_entity_bounds,
+  get_overlap_resolution,
   unit_distance,
   unit_distance_sq,
   unit_angle,
   isBulletIntersect,
+  point_angle,
+  segment_intersects_shape,
 } from "../core/utils.js";
 import { CanvasTextPrompt } from "../core/CanvasTextPrompt.js";
 import { DOT } from "../core/effects.js";
@@ -53,6 +57,8 @@ export class Unit extends EntityBasic {
 
   fixed_value = null; // 固定单位价值
   is_monster = false;
+  collision_static = false;
+  projectile_blocking = "enemy";
 
   target = null; //攻击目标
   _is_rendergun = true;
@@ -74,6 +80,25 @@ export class Unit extends EntityBasic {
     this.weapon = weapon;
     this.combat_threat_range = weapon.range * this.combat_threat_range_mul;
     soundManager.play("spawn", { position: { x: this.x, y: this.y } });
+  }
+
+  get_collision_shape() {
+    return { type: "circle", x: this.x, y: this.y, r: this.size };
+  }
+
+  get_bounds() {
+    const shape = this.get_collision_shape();
+    return get_entity_bounds({ get_collision_shape: () => shape });
+  }
+
+  should_block_projectile(bullet) {
+    if (this.projectile_blocking === "all") {
+      return true;
+    }
+    if (this.projectile_blocking === "none") {
+      return false;
+    }
+    return this.color !== bullet.color;
   }
 
   get x() {
@@ -160,7 +185,7 @@ export class Unit extends EntityBasic {
    */
   bullet_collision(bullet) {
     // 防止子弹已死亡或已处理过碰撞
-    if (bullet.dead || bullet.has_damaged(this)) {
+    if (bullet.dead || bullet.has_damaged(this) || !this.should_block_projectile(bullet)) {
       return;
     }
 
@@ -176,45 +201,36 @@ export class Unit extends EntityBasic {
    * @param {Object} unit - 要检测碰撞的另一个单位对象。
    */
   unit_collision(unit) {
-    let combinedSize = this.size + unit.size;
-    if (unit.x === this.x && unit.y === this.y) {
-      unit.x = unit.x + combinedSize / 2;
-      unit.y = unit.y + combinedSize / 2;
-      this.x = this.x - combinedSize / 2;
-      this.y = this.y - combinedSize / 2;
+    if (this.collision_static && unit.collision_static) {
       return;
     }
 
-    let dis = unit_distance(unit, this);
-
-    if (dis >= combinedSize) {
+    const resolution = get_overlap_resolution(this, unit);
+    if (!resolution) {
       return;
     }
 
-    let [unit_big, unit_small] = this.size > unit.size ? [this, unit] : [unit, this];
+    const depth = resolution.depth + 1;
 
-    // 计算方向向量
-    let dx = unit_small.x - unit_big.x;
-    let dy = unit_small.y - unit_big.y;
-    let norm = Math.sqrt(dx * dx + dy * dy);
+    if (this.collision_static) {
+      unit.x -= resolution.x * depth;
+      unit.y -= resolution.y * depth;
+      return;
+    }
+    if (unit.collision_static) {
+      this.x += resolution.x * depth;
+      this.y += resolution.y * depth;
+      return;
+    }
 
-    // 归一化方向向量
-    dx /= norm;
-    dy /= norm;
+    const combinedWeight = this.weight + unit.weight;
+    const moveThis = depth * (unit.weight / combinedWeight);
+    const moveOther = depth * (this.weight / combinedWeight);
 
-    // 计算调整后的距离以避免重叠
-    let overlap = (combinedSize - dis) / 2 + 1;
-
-    // 按重量比例分配移动距离
-    let combinedWeight = unit_big.weight + unit_small.weight;
-    let moveSmall = overlap * (unit_big.weight / combinedWeight);
-    let moveBig = overlap * (unit_small.weight / combinedWeight);
-
-    // 更新位置，按比例移动
-    unit_small.x += dx * moveSmall;
-    unit_small.y += dy * moveSmall;
-    unit_big.x -= dx * moveBig;
-    unit_big.y -= dy * moveBig;
+    this.x += resolution.x * moveThis;
+    this.y += resolution.y * moveThis;
+    unit.x -= resolution.x * moveOther;
+    unit.y -= resolution.y * moveOther;
 
     // console.log(`after collision ${unit_small.x},${unit_small.y}`);
   }
@@ -938,6 +954,298 @@ export class Turret extends Fighter {
   get weight() {
     //防御塔比较重
     return this.size * this.size * this.size;
+  }
+}
+
+class RectObstacle extends Unit {
+  collision_static = true;
+  _is_rendergun = false;
+
+  constructor({
+    x,
+    y,
+    width,
+    height,
+    color = game.player_color,
+    maxhp,
+    projectile_blocking = "enemy",
+    fill = "#8a8a73",
+    border = "#292923",
+  } = {}) {
+    super({
+      x,
+      y,
+      size: Math.max(width, height) / 2,
+      color,
+      speed: 0,
+      maxhp,
+      weapon: new MeleeWeapon({ wname: "Obstacle", damage: 0, range: 0 }),
+    });
+    this.width = width;
+    this.height = height;
+    this.projectile_blocking = projectile_blocking;
+    this.fill = fill;
+    this.border_color = border;
+  }
+
+  get weight() {
+    return this.width * this.height * 100;
+  }
+
+  get_collision_shape() {
+    return {
+      type: "obb",
+      x: this.x,
+      y: this.y,
+      hw: this.width / 2,
+      hh: this.height / 2,
+      angle: 0,
+    };
+  }
+
+  update() {
+    this._update_hp();
+    this._update_effect();
+  }
+
+  render(ctx) {
+    ctx.save();
+    ctx.fillStyle = this.fill;
+    ctx.strokeStyle = this.border_color;
+    ctx.lineWidth = 2;
+    ctx.fillRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+    ctx.strokeRect(this.x - this.width / 2, this.y - this.height / 2, this.width, this.height);
+    this._render_small_hpbar(ctx, this.hp, this.maxhp, this.y - this.height / 2 - 12);
+    ctx.restore();
+  }
+
+  _render_small_hpbar(ctx, hp, maxhp, y) {
+    const barWidth = Math.max(42, this.width * 0.7);
+    const barHeight = 8;
+    const hpPercent = Math.max(0, hp / maxhp);
+    ctx.fillStyle = hpPercent > 0.5 ? "green" : hpPercent > 0.25 ? "orange" : "red";
+    ctx.fillRect(this.x - barWidth / 2, y, barWidth * hpPercent, barHeight);
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(this.x - barWidth / 2, y, barWidth, barHeight);
+  }
+}
+
+export class Sandbag extends RectObstacle {
+  constructor({ x, y, color = game.player_color, maxhp = 2000 } = {}) {
+    super({
+      x,
+      y,
+      width: 96,
+      height: 24,
+      color,
+      maxhp,
+      projectile_blocking: "enemy",
+      fill: "#9b8f65",
+      border: "#50472d",
+    });
+  }
+}
+
+export class Cover extends RectObstacle {
+  constructor({ x, y, color = game.player_color, maxhp = 4000 } = {}) {
+    super({
+      x,
+      y,
+      width: 112,
+      height: 40,
+      color,
+      maxhp,
+      projectile_blocking: "all",
+      fill: "#64747a",
+      border: "#243238",
+    });
+  }
+}
+
+export class ArmoredCar extends Fighter {
+  combat_dodge_chance = 0.08;
+  _is_rendergun = false;
+
+  constructor({
+    x,
+    y,
+    weapon,
+    color = game.player_color,
+    speed = 2,
+    maxhp = 3000,
+    turret_hp = 2000,
+    turret_maxhp = 2000,
+    angle = 0,
+    turret_angle = 0,
+  } = {}) {
+    let vehicleGun = weapon;
+    if (!vehicleGun) {
+      vehicleGun = GunFactory.random_gun(0.5);
+    }
+    vehicleGun.recoil /= 1.2;
+    vehicleGun.ReloadTime /= 1.2;
+    vehicleGun.burst *= 2;
+    vehicleGun.magsize *= 2;
+    if (vehicleGun.PreFireRange) {
+      vehicleGun.PreFireRange *= 3;
+    }
+
+    super({ x, y, size: 28, color, speed, maxhp, weapon: vehicleGun });
+    this.width = 110;
+    this.height = 54;
+    this.angle = angle;
+    this.turret_angle = turret_angle;
+    this.turret_width = 40;
+    this.turret_height = 32;
+    this.turret_hp = turret_hp;
+    this.turret_maxhp = turret_maxhp;
+    this.turret_dead = this.turret_hp <= 0;
+  }
+
+  get weight() {
+    return this.width * this.height * 6;
+  }
+
+  get_collision_shape() {
+    return {
+      type: "obb",
+      x: this.x,
+      y: this.y,
+      hw: this.width / 2,
+      hh: this.height / 2,
+      angle: this.angle,
+    };
+  }
+
+  get_turret_shape() {
+    return {
+      type: "obb",
+      x: this.x,
+      y: this.y,
+      hw: this.turret_width / 2,
+      hh: this.turret_height / 2,
+      angle: this.turret_angle,
+    };
+  }
+
+  bullet_collision(bullet) {
+    if (bullet.dead || bullet.has_damaged(this) || !this.should_block_projectile(bullet)) {
+      return;
+    }
+
+    const ax = bullet.x - bullet.dx;
+    const ay = bullet.y - bullet.dy;
+    const bx = bullet.x;
+    const by = bullet.y;
+
+    this._hit_component = "hull";
+    if (
+      !this.turret_dead &&
+      segment_intersects_shape(ax, ay, bx, by, this.get_turret_shape(), bullet.size)
+    ) {
+      this._hit_component = "turret";
+      bullet.onHit(this);
+      this._hit_component = null;
+      return;
+    }
+
+    if (segment_intersects_shape(ax, ay, bx, by, this.get_collision_shape(), bullet.size)) {
+      bullet.onHit(this);
+      this._hit_component = null;
+    }
+  }
+
+  apply_damage(damage) {
+    if (this._hit_component === "turret" && !this.turret_dead) {
+      this.turret_hp -= damage;
+      if (this.turret_hp <= 0) {
+        this.turret_hp = 0;
+        this.turret_dead = true;
+        this.target = null;
+      }
+      return;
+    }
+
+    this.hp -= damage;
+  }
+
+  attack() {
+    if (this.turret_dead) {
+      return;
+    }
+    if (this.target && !this.target.dead) {
+      this.turret_angle = point_angle(this.x, this.y, this.target.x, this.target.y);
+    }
+    super.attack();
+  }
+
+  _move() {
+    const beforeX = this.x;
+    const beforeY = this.y;
+    super._move();
+    if (this.x !== beforeX || this.y !== beforeY) {
+      this.angle = point_angle(beforeX, beforeY, this.x, this.y);
+    }
+  }
+
+  render(ctx) {
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.angle);
+    ctx.fillStyle = "#49636b";
+    ctx.strokeStyle = "#1c2b30";
+    ctx.lineWidth = 2;
+    ctx.fillRect(-this.width / 2, -this.height / 2, this.width, this.height);
+    ctx.strokeRect(-this.width / 2, -this.height / 2, this.width, this.height);
+    ctx.restore();
+
+    ctx.save();
+    ctx.translate(this.x, this.y);
+    ctx.rotate(this.turret_angle);
+    ctx.fillStyle = this.turret_dead ? "#555" : "#263f48";
+    ctx.strokeStyle = "black";
+    ctx.lineWidth = 2;
+    ctx.fillRect(-this.turret_width / 2, -this.turret_height / 2, this.turret_width, this.turret_height);
+    ctx.strokeRect(-this.turret_width / 2, -this.turret_height / 2, this.turret_width, this.turret_height);
+    if (!this.turret_dead) {
+      ctx.lineWidth = 5;
+      ctx.beginPath();
+      ctx.moveTo(this.turret_width / 2 - 2, 0);
+      ctx.lineTo(this.turret_width / 2 + 32, 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    this._render_vehicle_hp(ctx);
+    this._render_RTSControlVehicle(ctx);
+  }
+
+  _render_vehicle_hp(ctx) {
+    const drawBar = (value, max, y, color) => {
+      const width = 70;
+      const height = 7;
+      const percent = Math.max(0, value / max);
+      ctx.fillStyle = color;
+      ctx.fillRect(this.x - width / 2, y, width * percent, height);
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(this.x - width / 2, y, width, height);
+    };
+
+    drawBar(this.hp, this.maxhp, this.y - this.height / 2 - 18, "green");
+    drawBar(this.turret_hp, this.turret_maxhp, this.y - this.height / 2 - 9, "cyan");
+  }
+
+  _render_RTSControlVehicle(ctx) {
+    if (!this.isSelected) {
+      return;
+    }
+    ctx.save();
+    ctx.strokeStyle = "rgba(9, 181, 9, 1)";
+    ctx.lineWidth = 2;
+    ctx.strokeRect(this.x - this.width / 2 - 6, this.y - this.height / 2 - 6, this.width + 12, this.height + 12);
+    ctx.restore();
   }
 }
 

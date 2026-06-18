@@ -1,4 +1,4 @@
-import { unit_distance, point_distance } from "./utils.js";
+import { point_distance, point_distance_to_entity } from "./utils.js";
 import { scatter_range } from "./config.js";
 class RTSControl {
   constructor() {
@@ -160,8 +160,8 @@ class RTSControl {
 
     for (let u of candidates) {
       if (u.color !== this.game.player_color && !u.dead && u.maxhp) {
-        const d = point_distance(u.x, u.y, wx, wy);
-        if (d < u.size + 10 && d < minE_Dist) {
+        const d = point_distance_to_entity(wx, wy, u);
+        if (d < 10 && d < minE_Dist) {
           // 稍微宽容一点的点击判定
           minE_Dist = d;
           targetEnemy = u;

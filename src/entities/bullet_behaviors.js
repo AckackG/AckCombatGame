@@ -1,4 +1,4 @@
-import { clamp, point_angle, unit_distance } from "../core/utils.js";
+import { clamp, point_angle, point_distance_to_entity } from "../core/utils.js";
 import { game, world } from "../core/game.js";
 import { CanvasCircle } from "../core/CanvasTextPrompt.js";
 import { DOT, SlowEffect } from "../core/effects.js";
@@ -13,7 +13,7 @@ export const ExplodeBehavior = (damage, radius, is_ff = false) => ({
     units.forEach((unit) => {
       // 友军伤害判定
       if ((unit.color !== bullet.color && !is_ff) || is_ff) {
-        let dis = unit_distance(unit, bullet) - unit.size;
+        let dis = point_distance_to_entity(bullet.x, bullet.y, unit);
         if (dis <= radius && !unit.dead) {
           // 线性衰减伤害计算
           const damage_percent = 0.5 + 0.5 * (1 - dis / radius);

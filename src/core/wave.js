@@ -1,4 +1,16 @@
-import { Monster, Unit, Base, Fighter, Turret, RangedMonster, ExplosiveMonster, SpawnerMonster } from "../entities/units.js";
+import {
+  ArmoredCar,
+  Cover,
+  Monster,
+  Unit,
+  Base,
+  Fighter,
+  Turret,
+  RangedMonster,
+  ExplosiveMonster,
+  SpawnerMonster,
+  Sandbag,
+} from "../entities/units.js";
 import { Battalion } from "../entities/battalion.js";
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
@@ -8,6 +20,9 @@ const UNIT_CLASS_BY_NAME = {
   Base,
   Fighter,
   Turret,
+  Sandbag,
+  Cover,
+  ArmoredCar,
   Monster,
   RangedMonster,
   ExplosiveMonster,
@@ -68,6 +83,16 @@ const UNIT_STATE_FIELDS = [
   "monster_mul",
   "split_on_death",
   "spawn_timer",
+  "width",
+  "height",
+  "projectile_blocking",
+  "angle",
+  "turret_angle",
+  "turret_hp",
+  "turret_maxhp",
+  "turret_dead",
+  "turret_width",
+  "turret_height",
 ];
 
 const SAVE_CHECKPOINT = {

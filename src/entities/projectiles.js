@@ -131,6 +131,15 @@ export class Bullet extends BulletBasic {
     if (behavior.onInit) behavior.onInit(this);
   }
 
+  get_bounds() {
+    return {
+      x: this.x - this.width / 2,
+      y: this.y - this.height / 2,
+      width: this.width,
+      height: this.height,
+    };
+  }
+
   get dead() {
     return this._dead;
   }

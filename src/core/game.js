@@ -251,9 +251,7 @@ class World {
       // 单位 X 子弹
       const bullet_candidates = this.BulletsQT.retrieve(unit);
       bullet_candidates.forEach((bullet_candidate) => {
-        if (unit.color !== bullet_candidate.color) {
-          unit.bullet_collision(bullet_candidate);
-        }
+        unit.bullet_collision(bullet_candidate);
       });
     });
     const collisions_end = performance.now();

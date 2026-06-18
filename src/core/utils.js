@@ -154,6 +154,117 @@ export function point_distance_sq(x1, y1, x2, y2) {
   return dx * dx + dy * dy;
 }
 
+export function get_entity_shape(entity) {
+  if (entity?.get_collision_shape) {
+    return entity.get_collision_shape();
+  }
+  return {
+    type: "circle",
+    x: entity.x,
+    y: entity.y,
+    r: entity.size ?? Math.max(entity.width ?? 0, entity.height ?? 0) / 2,
+  };
+}
+
+function get_shape_bounds(shape) {
+  if (shape.type === "circle") {
+    return {
+      x: shape.x - shape.r,
+      y: shape.y - shape.r,
+      width: shape.r * 2,
+      height: shape.r * 2,
+    };
+  }
+
+  const cos = Math.cos(shape.angle ?? 0);
+  const sin = Math.sin(shape.angle ?? 0);
+  const hw = shape.hw;
+  const hh = shape.hh;
+  const extentX = Math.abs(cos) * hw + Math.abs(sin) * hh;
+  const extentY = Math.abs(sin) * hw + Math.abs(cos) * hh;
+
+  return {
+    x: shape.x - extentX,
+    y: shape.y - extentY,
+    width: extentX * 2,
+    height: extentY * 2,
+  };
+}
+
+export function get_entity_bounds(entity) {
+  if (entity?.get_bounds) {
+    return entity.get_bounds();
+  }
+  if (entity?.get_collision_shape) {
+    return get_shape_bounds(entity.get_collision_shape());
+  }
+  const width = entity.width ?? (entity.size ?? 0) * 2;
+  const height = entity.height ?? (entity.size ?? 0) * 2;
+  return {
+    x: entity.x - width / 2,
+    y: entity.y - height / 2,
+    width,
+    height,
+  };
+}
+
+function to_local_point(x, y, shape) {
+  const angle = -(shape.angle ?? 0);
+  const cos = Math.cos(angle);
+  const sin = Math.sin(angle);
+  const dx = x - shape.x;
+  const dy = y - shape.y;
+  return {
+    x: dx * cos - dy * sin,
+    y: dx * sin + dy * cos,
+  };
+}
+
+function to_world_vector(x, y, angle) {
+  const cos = Math.cos(angle ?? 0);
+  const sin = Math.sin(angle ?? 0);
+  return {
+    x: x * cos - y * sin,
+    y: x * sin + y * cos,
+  };
+}
+
+function segment_intersects_aabb(ax, ay, bx, by, hw, hh) {
+  const dx = bx - ax;
+  const dy = by - ay;
+  let tMin = 0;
+  let tMax = 1;
+
+  const axes = [
+    { p: ax, d: dx, min: -hw, max: hw },
+    { p: ay, d: dy, min: -hh, max: hh },
+  ];
+
+  for (const axis of axes) {
+    if (Math.abs(axis.d) < 0.000001) {
+      if (axis.p < axis.min || axis.p > axis.max) {
+        return false;
+      }
+      continue;
+    }
+
+    const inv = 1 / axis.d;
+    let t1 = (axis.min - axis.p) * inv;
+    let t2 = (axis.max - axis.p) * inv;
+    if (t1 > t2) {
+      [t1, t2] = [t2, t1];
+    }
+
+    tMin = Math.max(tMin, t1);
+    tMax = Math.min(tMax, t2);
+    if (tMin > tMax) {
+      return false;
+    }
+  }
+
+  return true;
+}
+
 /**
  * 计算unit1->unit2之间的rad。
  *
@@ -237,6 +348,133 @@ function isIntersecting(Ax, Ay, Bx, By, Cx, Cy, R) {
   return false;
 }
 
+export function segment_intersects_shape(ax, ay, bx, by, shape, padding = 0) {
+  if (shape.type === "circle") {
+    return isIntersecting(ax, ay, bx, by, shape.x, shape.y, shape.r + padding);
+  }
+
+  const localA = to_local_point(ax, ay, shape);
+  const localB = to_local_point(bx, by, shape);
+  return segment_intersects_aabb(
+    localA.x,
+    localA.y,
+    localB.x,
+    localB.y,
+    shape.hw + padding,
+    shape.hh + padding
+  );
+}
+
+export function point_distance_to_shape(x, y, shape) {
+  if (shape.type === "circle") {
+    return Math.max(0, point_distance(x, y, shape.x, shape.y) - shape.r);
+  }
+
+  const local = to_local_point(x, y, shape);
+  const dx = Math.max(Math.abs(local.x) - shape.hw, 0);
+  const dy = Math.max(Math.abs(local.y) - shape.hh, 0);
+  return Math.sqrt(dx * dx + dy * dy);
+}
+
+export function point_distance_to_entity(x, y, entity) {
+  return point_distance_to_shape(x, y, get_entity_shape(entity));
+}
+
+function circle_rect_resolution(circle, rect) {
+  const local = to_local_point(circle.x, circle.y, rect);
+  const closestX = clamp(local.x, -rect.hw, rect.hw);
+  const closestY = clamp(local.y, -rect.hh, rect.hh);
+  let dx = local.x - closestX;
+  let dy = local.y - closestY;
+  let dist = Math.sqrt(dx * dx + dy * dy);
+  let depth = circle.r - dist;
+
+  if (dist < 0.000001) {
+    const toRight = rect.hw - local.x;
+    const toLeft = rect.hw + local.x;
+    const toBottom = rect.hh - local.y;
+    const toTop = rect.hh + local.y;
+    const min = Math.min(toRight, toLeft, toBottom, toTop);
+
+    if (min === toRight) {
+      dx = 1;
+      dy = 0;
+      depth = circle.r + toRight;
+    } else if (min === toLeft) {
+      dx = -1;
+      dy = 0;
+      depth = circle.r + toLeft;
+    } else if (min === toBottom) {
+      dx = 0;
+      dy = 1;
+      depth = circle.r + toBottom;
+    } else {
+      dx = 0;
+      dy = -1;
+      depth = circle.r + toTop;
+    }
+  } else {
+    dx /= dist;
+    dy /= dist;
+  }
+
+  if (depth <= 0) {
+    return null;
+  }
+
+  const worldVector = to_world_vector(dx, dy, rect.angle ?? 0);
+  return { x: worldVector.x, y: worldVector.y, depth };
+}
+
+function bounds_overlap_resolution(shapeA, shapeB) {
+  const a = get_shape_bounds(shapeA);
+  const b = get_shape_bounds(shapeB);
+  const overlapX = Math.min(a.x + a.width, b.x + b.width) - Math.max(a.x, b.x);
+  const overlapY = Math.min(a.y + a.height, b.y + b.height) - Math.max(a.y, b.y);
+  if (overlapX <= 0 || overlapY <= 0) {
+    return null;
+  }
+
+  if (overlapX < overlapY) {
+    return { x: shapeA.x < shapeB.x ? -1 : 1, y: 0, depth: overlapX };
+  }
+  return { x: 0, y: shapeA.y < shapeB.y ? -1 : 1, depth: overlapY };
+}
+
+export function get_overlap_resolution(entityA, entityB) {
+  const shapeA = get_entity_shape(entityA);
+  const shapeB = get_entity_shape(entityB);
+
+  if (shapeA.type === "circle" && shapeB.type === "circle") {
+    const combined = shapeA.r + shapeB.r;
+    let dx = shapeA.x - shapeB.x;
+    let dy = shapeA.y - shapeB.y;
+    let dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist >= combined) {
+      return null;
+    }
+    if (dist < 0.000001) {
+      dx = 1;
+      dy = 0;
+      dist = 1;
+    }
+    return { x: dx / dist, y: dy / dist, depth: combined - dist };
+  }
+
+  if (shapeA.type === "circle") {
+    return circle_rect_resolution(shapeA, shapeB);
+  }
+
+  if (shapeB.type === "circle") {
+    const resolution = circle_rect_resolution(shapeB, shapeA);
+    return resolution
+      ? { x: -resolution.x, y: -resolution.y, depth: resolution.depth }
+      : null;
+  }
+
+  return bounds_overlap_resolution(shapeA, shapeB);
+}
+
 /**
  * 检查子弹是否已经命中单位。
  *
@@ -247,14 +485,13 @@ function isIntersecting(Ax, Ay, Bx, By, Cx, Cy, R) {
  * @returns {boolean} 如果子弹和单位相交，则返回true；否则返回false。
  */
 export function isBulletIntersect(bullet, unit) {
-  return isIntersecting(
+  return segment_intersects_shape(
     bullet.x - bullet.dx,
     bullet.y - bullet.dy,
     bullet.x,
     bullet.y,
-    unit.x,
-    unit.y,
-    unit.size + bullet.size
+    get_entity_shape(unit),
+    bullet.size
   );
 }
 

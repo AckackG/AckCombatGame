@@ -1,4 +1,8 @@
 function init() {
+  function toBounds(pRect) {
+    return pRect?.get_bounds ? pRect.get_bounds() : pRect;
+  }
+
   /**
    * The Quadtree uses rectangle objects for all areas ("Rect").
    * All rectangles require the properties x, y, width, height
@@ -99,6 +103,8 @@ function init() {
    * @memberof Quadtree
    */
   Quadtree.prototype.getIndex = function (pRect) {
+    pRect = toBounds(pRect);
+
     var indexes = [],
       verticalMidpoint = this.bounds.x + this.bounds.width / 2,
       horizontalMidpoint = this.bounds.y + this.bounds.height / 2;

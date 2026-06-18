@@ -14,7 +14,7 @@
 - `World` 维护 `units`、`bullets` 和 `CanvasPrompts`。
 - `EntityBasic` 是最基础的实体基类，提供位置和基础渲染属性。
 - `Unit` 是战斗单位基类，包含生命值、阵营颜色、移动逻辑、武器挂载和状态效果列表。
-- `src/entities/units.js` 定义 `Unit`、`Fighter`、`Turret`、`Monster`、`Base` 等单位。
+- `src/entities/units.js` 定义 `Unit`、`Fighter`、`Turret`、`Monster`、`Base`、沙袋、掩体和装甲车等单位。
 - `src/entities/projectiles.js` 定义 `Bullet` 与 `BulletFactory`。
 - `src/entities/bullet_behaviors.js` 存放子弹行为插件，例如爆炸、燃烧和中毒。
 
@@ -26,6 +26,7 @@
 - 子弹行为采用组合模式，新增复杂弹药优先写成 Behavior，而不是继续扩展深层继承。
 - 后坐力火控由 `GunBasic` 维护当前 heat、冷却状态和冷却倍率，连续开火期间不冷却，触发火控停火后必须完全冷却才恢复开火；单位获得目标时按目标体积生成后坐力命中参考表；启用火控的武器由命中率阈值决定开火距离，不再使用 `PreFireRange` 作为开火门槛。
 - 减速等非伤害状态通过效果系统修改单位移动倍率，不直接覆盖单位基础 `speed`。
+- 投射物命中和爆炸半径通过实体碰撞形状结算，支持圆形、固定矩形和旋转矩形；是否阻挡友方投射物由目标实体策略决定。
 
 ## 战役系统
 

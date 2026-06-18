@@ -1,5 +1,15 @@
 import { CanvasTextPrompt } from "./CanvasTextPrompt.js";
-import { Fighter, Unit, Turret, Monster, Dummy, ExplosiveMonster } from "../entities/units.js";
+import {
+  ArmoredCar,
+  Cover,
+  Fighter,
+  Unit,
+  Turret,
+  Monster,
+  Dummy,
+  ExplosiveMonster,
+  Sandbag,
+} from "../entities/units.js";
 import { GunFactory, MeleeWeapon } from "./weapons.js";
 import { game, world } from "./game.js";
 import { Battalion } from "../entities/battalion.js";
@@ -218,8 +228,9 @@ btn_stats_back.addEventListener("click", () => {
 });
 
 function drop_unit(x, y) {
+  const is_free_placement = game.currentMode === "SANDBOX";
   //金钱检测
-  if (placing.placing_cost > game.money) {
+  if (!is_free_placement && placing.placing_cost > game.money) {
     world.CanvasPrompts.push(
       new CanvasTextPrompt({
         text: "金钱不足",
@@ -231,7 +242,7 @@ function drop_unit(x, y) {
       })
     );
     return;
-  } else {
+  } else if (!is_free_placement) {
     game.money -= placing.placing_cost;
     world.CanvasPrompts.push(
       new CanvasTextPrompt({
@@ -242,6 +253,18 @@ function drop_unit(x, y) {
         size: 15,
         color: "purple",
         lifetime: 1500,
+      })
+    );
+  } else {
+    world.CanvasPrompts.push(
+      new CanvasTextPrompt({
+        text: "SANDBOX",
+        x,
+        y,
+        vy: -1,
+        size: 12,
+        color: "purple",
+        lifetime: 800,
       })
     );
   }
@@ -382,6 +405,36 @@ function register_playerunit() {
     e.target.style.backgroundColor = "red";
     placing.placing_classes = [Turret];
     placing.placing_cost = 12000;
+  });
+
+  btn_units[3].style.display = "";
+  btn_units[3].addEventListener("click", (e) => {
+    placing.reset_units_btn();
+    placing.is_placing = true;
+    e.target.style.backgroundColor = "red";
+    placing.placing_classes = [Sandbag];
+    placing.placing_cost = 1500;
+    placing.placing_hp = 2000;
+  });
+
+  btn_units[4].style.display = "";
+  btn_units[4].addEventListener("click", (e) => {
+    placing.reset_units_btn();
+    placing.is_placing = true;
+    e.target.style.backgroundColor = "red";
+    placing.placing_classes = [Cover];
+    placing.placing_cost = 1000;
+    placing.placing_hp = 4000;
+  });
+
+  btn_units[5].style.display = "";
+  btn_units[5].addEventListener("click", (e) => {
+    placing.reset_units_btn();
+    placing.is_placing = true;
+    e.target.style.backgroundColor = "red";
+    placing.placing_classes = [ArmoredCar];
+    placing.placing_cost = 15000;
+    placing.placing_hp = 3000;
   });
 
   //canvas左键放置

@@ -50,7 +50,11 @@ export function deal_damage({
   }
 
   // 3. 造成伤害
-  target.hp -= actual_damage;
+  if (target.apply_damage) {
+    target.apply_damage(actual_damage, { damage_type, source_weapon, source_unit, source_bullet });
+  } else {
+    target.hp -= actual_damage;
+  }
 
   // 4. 目标粘性与仇恨响应 (Target Agro)
   // 如果受击者是 Monster 且攻击者存在，有概率被激怒并转移仇恨到攻击者身上，避免玩家单方面安全风筝

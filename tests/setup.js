@@ -7,7 +7,7 @@ document.body.innerHTML = `
     <div id="perf"></div>
     <div id="debufinfo" style="display: none"></div>
   </div>
-  <div id="units"><button></button><button></button><button></button></div>
+  <div id="units"><button></button><button></button><button></button><button></button><button></button><button></button></div>
   <button id="button1"></button>
   <button id="btn-pause"></button>
   <button id="button2"></button>
@@ -43,11 +43,15 @@ HTMLCanvasElement.prototype.getContext = () => {
     translate: () => {},
     scale: () => {},
     fillRect: () => {},
+    strokeRect: () => {},
     fillText: () => {},
     beginPath: () => {},
     arc: () => {},
     fill: () => {},
     stroke: () => {},
+    moveTo: () => {},
+    lineTo: () => {},
+    rotate: () => {},
     setTransform: () => {},
     drawImage: () => {},
     createPattern: () => ({ setTransform: () => {} }),
