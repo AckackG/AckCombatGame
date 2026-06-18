@@ -162,28 +162,23 @@ const btn_stats_back = document.getElementById("btn-stats-back");
 const stats_content = document.getElementById("stats-content");
 let was_paused_before_stats = false;
 
-btn_show_stats.addEventListener("click", () => {
-  was_paused_before_stats = game.paused;
-  game.paused = true;
-  stats_container.style.display = "flex";
-
-  const report = game.weapon_stats.get_report();
-  
+function renderStatsPanel(report) {
   if (report.length === 0) {
-    stats_content.innerHTML = "<div style='color: #888; text-align: center; grid-column: 1 / -1;'>NO COMBAT DATA AVAILABLE</div>";
-    return;
+    return "<div style='color: #888; text-align: center; grid-column: 1 / -1;'>NO COMBAT DATA AVAILABLE</div>";
   }
 
   // 按照实战 DPS 降序排序
   report.sort((a, b) => b.dps_finnal - a.dps_finnal);
 
-  let html = "";
-  report.forEach(stat => {
-    // 处理 NaN 等异常情况
-    const hitRate = isNaN(stat.accurate) ? 0 : (stat.accurate * 100);
-    const dmgEfficiency = isNaN(stat.dmg_efficiency) ? 0 : (stat.dmg_efficiency * 100);
+  return report.map(renderWeaponStatCard).join("");
+}
 
-    html += `
+function renderWeaponStatCard(stat) {
+  // 处理 NaN 等异常情况
+  const hitRate = isNaN(stat.accurate) ? 0 : (stat.accurate * 100);
+  const dmgEfficiency = isNaN(stat.dmg_efficiency) ? 0 : (stat.dmg_efficiency * 100);
+
+  return `
       <div class="weapon-card" style="display: flex; flex-direction: column; gap: 5px;">
         <div class="w-header" style="border-bottom: 1px solid #444; padding-bottom: 5px; margin-bottom: 5px;">
           <div class="w-name" style="color: #00ffcc; font-size: 16px;">${stat.name.replace(/_/g, " ")}</div>
@@ -206,9 +201,13 @@ btn_show_stats.addEventListener("click", () => {
         </div>
       </div>
     `;
-  });
+}
 
-  stats_content.innerHTML = html;
+btn_show_stats.addEventListener("click", () => {
+  was_paused_before_stats = game.paused;
+  game.paused = true;
+  stats_container.style.display = "flex";
+  stats_content.innerHTML = renderStatsPanel(game.weapon_stats.get_report());
 });
 
 btn_stats_back.addEventListener("click", () => {

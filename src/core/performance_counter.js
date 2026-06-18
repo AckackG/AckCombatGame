@@ -18,6 +18,9 @@ export class PerformanceCounter {
     this.render_bullets_time = 0;
     this.render_canvas_time = 0;
     this.render_canvas_count = 0;
+
+    this.window_ms = 5000;
+    this.samples = [];
   }
 
   /**
@@ -60,6 +63,45 @@ export class PerformanceCounter {
     this.render_bullets_time = bullets_time;
     this.render_canvas_time = canvas_time;
     this.render_canvas_count = canvas_count;
+    this.#recordSample();
+  }
+
+  #recordSample() {
+    const now = performance.now();
+    const total =
+      this.units_time +
+      this.bullets_time +
+      this.collisions_time +
+      this.render_units_time +
+      this.render_bullets_time +
+      this.render_canvas_time;
+
+    this.samples.push({ time: now, total });
+
+    const cutoff = now - this.window_ms;
+    while (this.samples.length && this.samples[0].time < cutoff) {
+      this.samples.shift();
+    }
+  }
+
+  #getWindowStats() {
+    if (!this.samples.length) {
+      return { avg: 0, max: 0 };
+    }
+
+    let total = 0;
+    let max = 0;
+    this.samples.forEach((sample) => {
+      total += sample.total;
+      if (sample.total > max) {
+        max = sample.total;
+      }
+    });
+
+    return {
+      avg: total / this.samples.length,
+      max,
+    };
   }
 
   /**
@@ -69,12 +111,21 @@ export class PerformanceCounter {
   getReport() {
     const total_time = this.units_time + this.bullets_time;
     const total_count = this.units_count + this.bullets_count;
+    const windowStats = this.#getWindowStats();
 
     const avg_unit =
       this.units_count > 0 ? (this.units_time / this.units_count).toFixed(4) : "0.0000";
 
     const avg_bullet =
       this.bullets_count > 0 ? (this.bullets_time / this.bullets_count).toFixed(4) : "0.0000";
+
+    const currentTotal = (
+      total_time +
+      this.collisions_time +
+      this.render_units_time +
+      this.render_bullets_time +
+      this.render_canvas_time
+    ).toFixed(2);
 
     return `Logic: Units ${this.units_count}×${avg_unit}ms=${this.units_time.toFixed(
       2
@@ -88,13 +139,9 @@ export class PerformanceCounter {
       2
     )}ms | Render Canvas ${this.render_canvas_time.toFixed(2)}ms (${
       this.render_canvas_count
-    } times) <br>  Total: ${(
-      total_time +
-      this.collisions_time +
-      this.render_units_time +
-      this.render_bullets_time +
-      this.render_canvas_time
-    ).toFixed(2)}ms`;
+    } times) <br>  Total: ${currentTotal}ms | 5s Avg ${windowStats.avg.toFixed(
+      2
+    )}ms / Max ${windowStats.max.toFixed(2)}ms`;
   }
 }
 

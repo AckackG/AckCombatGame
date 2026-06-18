@@ -96,6 +96,10 @@ export function unit_distance(unit1, unit2) {
   return point_distance(unit1.x, unit1.y, unit2.x, unit2.y);
 }
 
+export function unit_distance_sq(unit1, unit2) {
+  return point_distance_sq(unit1.x, unit1.y, unit2.x, unit2.y);
+}
+
 /**
  * 计算两点之间的欧几里得距离。
  *
@@ -107,6 +111,12 @@ export function unit_distance(unit1, unit2) {
  */
 export function point_distance(x1, y1, x2, y2) {
   return Math.sqrt(Math.pow(x2 - x1, 2) + Math.pow(y2 - y1, 2));
+}
+
+export function point_distance_sq(x1, y1, x2, y2) {
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  return dx * dx + dy * dy;
 }
 
 /**

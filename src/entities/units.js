@@ -1,4 +1,4 @@
-import { unit_distance, unit_angle, isBulletIntersect } from "../core/utils.js";
+import { unit_distance, unit_distance_sq, unit_angle, isBulletIntersect } from "../core/utils.js";
 import { CanvasTextPrompt } from "../core/CanvasTextPrompt.js";
 import { DOT } from "../core/effects.js";
 import { GunFactory, MeleeWeapon } from "../core/weapons.js";
@@ -389,8 +389,6 @@ export class Unit extends EntityBasic {
 
     //先根据概率选择寻敌策略，如果threat寻敌失败则再次就近寻敌
     if (Math.random() > this.combat_threat_chance) {
-      //可能的优化：先从 quadtree 里找最近单位，找不到再遍历所有
-      //可能的优化：比较距离的平方而不是距离，反正是比大小不用开平方了
       return this._slow_findNearestTarget(UnitList);
     } else {
       if (this._slow_findDangerousTarget(UnitList)) {
@@ -410,12 +408,12 @@ export class Unit extends EntityBasic {
    */
   _slow_findNearestTarget(UnitList, MaxDistance = Infinity) {
     let closestUnit = null;
-    let minDistance = MaxDistance;
+    let minDistanceSq = MaxDistance === Infinity ? Infinity : MaxDistance * MaxDistance;
 
     UnitList.forEach((unit) => {
-      const dis = unit_distance(this, unit);
-      if (dis < minDistance) {
-        minDistance = dis;
+      const disSq = unit_distance_sq(this, unit);
+      if (disSq < minDistanceSq) {
+        minDistanceSq = disSq;
         closestUnit = unit;
       }
     });
@@ -439,9 +437,10 @@ export class Unit extends EntityBasic {
   _slow_findDangerousTarget(UnitList, MaxDistance = this.combat_threat_range) {
     let highestThreat = 0;
     let mostDangerousUnit = null;
+    const maxDistanceSq = MaxDistance === Infinity ? Infinity : MaxDistance * MaxDistance;
 
     UnitList.forEach((unit) => {
-      if (unit_distance(this, unit) < MaxDistance) {
+      if (unit_distance_sq(this, unit) < maxDistanceSq) {
         const threatLevel = unit.threat;
         if (threatLevel > highestThreat) {
           highestThreat = threatLevel;

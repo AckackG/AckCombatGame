@@ -1,5 +1,13 @@
 import { describe, it, expect } from 'vitest';
-import { unit_distance, point_distance, getRandomSign, ObjectPool, cleanDeadEntities } from '../src/core/utils.js';
+import {
+  unit_distance,
+  unit_distance_sq,
+  point_distance,
+  point_distance_sq,
+  getRandomSign,
+  ObjectPool,
+  cleanDeadEntities,
+} from '../src/core/utils.js';
 
 describe('Utils Functions', () => {
   it('point_distance calculates correct distance', () => {
@@ -8,10 +16,21 @@ describe('Utils Functions', () => {
     expect(point_distance(-1, -1, 2, 3)).toBe(5);
   });
 
+  it('point_distance_sq calculates squared distance', () => {
+    expect(point_distance_sq(0, 0, 3, 4)).toBe(25);
+    expect(point_distance_sq(1, 1, 1, 1)).toBe(0);
+  });
+
   it('unit_distance calculates correct distance between objects', () => {
     const obj1 = { x: 0, y: 0 };
     const obj2 = { x: 3, y: 4 };
     expect(unit_distance(obj1, obj2)).toBe(5);
+  });
+
+  it('unit_distance_sq calculates squared distance between objects', () => {
+    const obj1 = { x: 0, y: 0 };
+    const obj2 = { x: 3, y: 4 };
+    expect(unit_distance_sq(obj1, obj2)).toBe(25);
   });
 
   it('getRandomSign returns 1 or -1', () => {
